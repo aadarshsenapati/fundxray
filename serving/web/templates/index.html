@@ -81,13 +81,24 @@
 
     <!-- manual entry -->
     <div id="entryManual" class="card p-5 mb-6">
-      <p class="text-sm muted mb-4">Enter the rupee value you hold in each scheme. Leave blank to skip.</p>
-      <div id="funds" class="grid md:grid-cols-2 gap-3">
-        <div class="skeleton h-10 rounded-lg"></div>
-        <div class="skeleton h-10 rounded-lg"></div>
-        <div class="skeleton h-10 rounded-lg"></div>
-        <div class="skeleton h-10 rounded-lg"></div>
+      <p class="text-sm muted mb-1">Search for a fund and add it as a position. Add as many as you hold.</p>
+      <p class="text-xs muted mb-4">
+        Limited to schemes FundXRay has holdings data for — a demo set of 10 here.
+        A production deployment covers the full AMFI universe.
+      </p>
+
+      <div class="relative mb-4">
+        <input type="text" id="fundSearch" placeholder="Search funds by name…"
+               class="w-full px-3 py-2.5 text-sm" autocomplete="off"
+               aria-label="Search funds" aria-expanded="false" role="combobox"/>
+        <div id="fundSuggestions"
+             class="hidden absolute z-30 mt-1 w-full card max-h-72 overflow-y-auto shadow-xl" role="listbox"></div>
       </div>
+
+      <div id="fundRows" class="space-y-2 mb-2">
+        <p id="fundRowsEmpty" class="text-sm muted">No funds added yet — search above to add your first one.</p>
+      </div>
+
       <div class="mt-5 flex flex-wrap items-center gap-3">
         <button id="run" class="btn-primary px-5 py-2">Run X-Ray</button>
         <label class="text-sm muted flex items-center gap-2">
@@ -347,28 +358,126 @@ function switchLiquidityTab(which){
   if(which === "crowd") loadCrowding();
 }
 
+/* ---------------- fund search & add ---------------- */
+const selectedFunds = new Map(); // scheme_code -> scheme object
+
+function schemeByCode(code){ return schemes.find(s => s.scheme_code === code); }
+
+function renderFundRows(){
+  const wrap = document.getElementById("fundRows");
+  const empty = document.getElementById("fundRowsEmpty");
+  if(!selectedFunds.size){
+    wrap.innerHTML = "";
+    wrap.appendChild(empty);
+    empty.classList.remove("hidden");
+    return;
+  }
+  wrap.innerHTML = "";
+  selectedFunds.forEach((s, code) => {
+    const row = document.createElement("div");
+    row.className = "flex items-center gap-3";
+    row.innerHTML = `
+      <div class="flex-1 min-w-0">
+        <div class="text-sm truncate">${s.scheme_name}</div>
+        <div class="text-xs muted">${s.category} · TER ${s.ter_regular_pct}%</div>
+      </div>
+      <input type="number" min="0" step="1000" placeholder="0" data-code="${code}"
+             class="w-32 px-2 py-1.5 rounded-md text-sm" aria-label="Amount in ${s.scheme_name}"/>
+      <button type="button" data-remove="${code}"
+              class="text-lg leading-none w-7 h-7 rounded-md hover:bg-[#1e2936] transition muted"
+              aria-label="Remove ${s.scheme_name}">×</button>`;
+    wrap.appendChild(row);
+  });
+  wrap.querySelectorAll("[data-remove]").forEach(btn => {
+    btn.onclick = () => { selectedFunds.delete(btn.dataset.remove); renderFundRows(); };
+  });
+}
+
+function addFund(code){
+  if(selectedFunds.has(code)){
+    // already added — just focus its amount field instead of duplicating
+    const el = document.querySelector(`input[data-code="${code}"]`);
+    el?.focus();
+    return;
+  }
+  const s = schemeByCode(code);
+  if(!s) return;
+  selectedFunds.set(code, s);
+  renderFundRows();
+  requestAnimationFrame(() => document.querySelector(`input[data-code="${code}"]`)?.focus());
+}
+
+function renderSuggestions(query){
+  const box = document.getElementById("fundSuggestions");
+  const search = document.getElementById("fundSearch");
+  const q = query.trim().toLowerCase();
+  if(!q){ box.classList.add("hidden"); search.setAttribute("aria-expanded","false"); return; }
+
+  const matches = schemes.filter(s => s.scheme_name.toLowerCase().includes(q)
+                                     || (s.category||"").toLowerCase().includes(q)).slice(0, 8);
+  if(!matches.length){
+    box.innerHTML = `<div class="px-3 py-3 text-sm muted">No schemes match "${query}".</div>`;
+    box.classList.remove("hidden");
+    search.setAttribute("aria-expanded","true");
+    return;
+  }
+  box.innerHTML = matches.map(s => `
+    <button type="button" data-pick="${s.scheme_code}" role="option"
+            class="w-full text-left px-3 py-2.5 text-sm hover:bg-[#1e2936] transition flex items-center justify-between gap-2 ${selectedFunds.has(s.scheme_code) ? 'opacity-50' : ''}">
+      <span class="truncate">${s.scheme_name}</span>
+      <span class="text-xs muted shrink-0">${s.category}${selectedFunds.has(s.scheme_code) ? ' · added' : ''}</span>
+    </button>`).join("");
+  box.classList.remove("hidden");
+  search.setAttribute("aria-expanded","true");
+  box.querySelectorAll("[data-pick]").forEach(btn => {
+    btn.onclick = () => {
+      addFund(btn.dataset.pick);
+      search.value = "";
+      box.classList.add("hidden");
+      search.setAttribute("aria-expanded","false");
+      search.focus();
+    };
+  });
+}
+
+function initFundSearch(){
+  const search = document.getElementById("fundSearch");
+  const box = document.getElementById("fundSuggestions");
+  search.addEventListener("input", () => renderSuggestions(search.value));
+  search.addEventListener("focus", () => { if(search.value.trim()) renderSuggestions(search.value); });
+  search.addEventListener("keydown", (e) => {
+    if(e.key === "Enter"){
+      e.preventDefault();
+      const first = box.querySelector("[data-pick]");
+      if(first) first.click();
+    } else if(e.key === "Escape"){
+      box.classList.add("hidden");
+      search.setAttribute("aria-expanded","false");
+    }
+  });
+  document.addEventListener("click", (e) => {
+    if(!box.contains(e.target) && e.target !== search){
+      box.classList.add("hidden");
+      search.setAttribute("aria-expanded","false");
+    }
+  });
+}
+
 /* ---------------- init ---------------- */
 async function init(){
   initNavSpy();
+  initFundSearch();
   try{
     schemes = await (await fetch("/api/schemes")).json();
   }catch(e){ schemes = []; }
 
   if(!Array.isArray(schemes) || !schemes.length){
-    document.getElementById("funds").innerHTML =
-      `<p class="text-sm muted col-span-2">No scheme data available right now. The serving artifact may still be building — try reloading in a moment.</p>`;
+    document.getElementById("fundSearch").disabled = true;
+    document.getElementById("fundSearch").placeholder = "No scheme data available — try reloading in a moment";
+    document.getElementById("fundRowsEmpty").textContent =
+      "No scheme data available right now. The serving artifact may still be building.";
     return;
   }
-
-  document.getElementById("funds").innerHTML = schemes.map(s => `
-    <div class="flex items-center gap-3">
-      <div class="flex-1 min-w-0">
-        <div class="text-sm truncate">${s.scheme_name}</div>
-        <div class="text-xs muted">${s.category} · TER ${s.ter_regular_pct}%</div>
-      </div>
-      <input type="number" min="0" step="1000" placeholder="0" data-code="${s.scheme_code}"
-             class="w-32 px-2 py-1 rounded-md text-sm"/>
-    </div>`).join("");
 
   const schemeOptions = schemes.map(s => `<option value="${s.scheme_code}">${s.scheme_name}</option>`).join("");
   document.getElementById("driftScheme").innerHTML = schemeOptions;
@@ -390,7 +499,7 @@ document.getElementById("run").onclick = async () => {
     const v = parseFloat(i.value); if (v > 0) holdings[i.dataset.code] = v;
   });
   const st = document.getElementById("status");
-  if (!Object.keys(holdings).length){ st.textContent = "Enter at least one amount."; return; }
+  if (!Object.keys(holdings).length){ st.textContent = "Add a fund and enter an amount first."; return; }
   st.textContent = "Analysing…";
 
   try{
