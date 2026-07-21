@@ -1,0 +1,35 @@
+{
+  "generated_at": "2026-07-21T19:32:40.025456",
+  "cores": 2,
+  "spark": "3.5.1",
+  "results": [
+    {
+      "group": "3-small-files",
+      "variant": "200 small files (200 parts)",
+      "seconds": 1.68,
+      "result": 2000,
+      "file_count": 200
+    },
+    {
+      "group": "3-small-files",
+      "variant": "compacted (2 parts)",
+      "seconds": 0.31,
+      "result": 2000,
+      "file_count": 2
+    },
+    {
+      "group": "4-file-format",
+      "variant": "parquet scan+agg",
+      "seconds": 0.43,
+      "result": 2000,
+      "size_on_disk_mb": 4.1
+    },
+    {
+      "group": "4-file-format",
+      "variant": "orc scan+agg",
+      "seconds": 0.51,
+      "result": 2000,
+      "size_on_disk_mb": 4.3
+    }
+  ]
+}

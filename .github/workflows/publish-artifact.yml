@@ -1,0 +1,57 @@
+name: publish-artifact
+
+# Rebuilds the serving artifact and publishes it. AMCs disclose within ~10 days
+# of month end, so this runs on the 12th. GitHub Actions is the scheduler;
+# no always-on infrastructure is required.
+on:
+  schedule:
+    - cron: "0 3 12 * *"
+  workflow_dispatch:
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11", cache: pip }
+
+      - name: Install
+        run: |
+          grep -vE '^(pyspark|dagster)' requirements.txt > req.txt
+          pip install -r req.txt
+
+      - name: Ingest and build
+        env:
+          PYTHONPATH: ".:core"
+          SMARTAPI_API_KEY: ${{ secrets.SMARTAPI_API_KEY }}
+          SMARTAPI_CLIENT_ID: ${{ secrets.SMARTAPI_CLIENT_ID }}
+          SMARTAPI_PASSWORD: ${{ secrets.SMARTAPI_PASSWORD }}
+          SMARTAPI_TOTP_SECRET: ${{ secrets.SMARTAPI_TOTP_SECRET }}
+        run: |
+          python -m pipelines.ingestion.amfi.nav
+          python -m pipelines.ingestion.reference.seed
+          python -m pipelines.ingestion.angelone.adv_refresh || echo "SmartAPI unavailable; keeping prior prices"
+          python -m serving.artifacts.build
+
+      - name: Block publish if quality gates failed
+        env: { PYTHONPATH: ".:core" }
+        run: |
+          python - <<'PY'
+          import duckdb, sys
+          from fundxray_core.config import settings
+          rows = duckdb.connect(str(settings.artifact_path), read_only=True) \
+                       .execute("SELECT metric, passed FROM quality").fetchall()
+          bad = [m for m, p in rows if not p]
+          for m, p in rows:
+              print(("PASS  " if p else "FAIL  ") + m)
+          if bad:
+              print("refusing to publish:", bad); sys.exit(1)
+          PY
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: fundxray-artifact
+          path: data/artifacts/fundxray.duckdb
+          retention-days: 90

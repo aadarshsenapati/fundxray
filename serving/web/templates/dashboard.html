@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Your portfolio — FundXRay</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  body{background:#0b0f14;color:#e6edf3;font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
+  .card{background:#111820;border:1px solid #1e2936;border-radius:14px}
+  .muted{color:#8b9bb0}
+</style>
+</head>
+<body class="min-h-screen">
+<div class="max-w-6xl mx-auto px-5 py-8">
+
+  <header class="flex items-start justify-between mb-8 gap-4">
+    <div>
+      <h1 class="text-2xl font-bold tracking-tight">Your portfolio</h1>
+      <p class="muted text-sm mt-1" id="sessionInfo">Loading…</p>
+    </div>
+    <div class="flex items-center gap-3 shrink-0">
+      <a href="/" class="text-sm muted hover:text-white">Fund X-Ray</a>
+      <a href="/logout" class="text-sm bg-[#1e2936] hover:bg-[#26333f] px-3 py-1.5 rounded-lg">Sign out</a>
+    </div>
+  </header>
+
+  <div id="error" class="hidden card p-5 mb-6 border-red-500/40">
+    <p class="text-red-400 font-semibold mb-1">Couldn't load your holdings</p>
+    <p class="text-sm muted" id="errorMsg"></p>
+  </div>
+
+  <div id="content" class="hidden">
+
+    <section class="grid md:grid-cols-4 gap-4 mb-6">
+      <div class="card p-4"><div class="text-xs muted">TOTAL VALUE</div><div id="k1" class="text-xl font-bold mt-1"></div></div>
+      <div class="card p-4"><div class="text-xs muted">INVESTED</div><div id="k2" class="text-xl font-bold mt-1"></div></div>
+      <div class="card p-4"><div class="text-xs muted">PROFIT / LOSS</div><div id="k3" class="text-xl font-bold mt-1"></div><div id="k3s" class="text-sm muted"></div></div>
+      <div class="card p-4"><div class="text-xs muted">TOP HOLDING</div><div id="k4" class="text-lg font-bold mt-1"></div><div id="k4s" class="text-sm muted"></div></div>
+    </section>
+
+    <section class="grid md:grid-cols-2 gap-4 mb-6">
+      <div class="card p-5">
+        <h3 class="font-semibold mb-1">Concentration</h3>
+        <p class="text-sm muted mb-3" id="concText"></p>
+        <canvas id="chartHoldings" height="240"></canvas>
+      </div>
+      <div class="card p-5">
+        <h3 class="font-semibold mb-3">Sector exposure</h3>
+        <canvas id="chartSectors" height="240"></canvas>
+      </div>
+    </section>
+
+    <section class="card p-5 mb-6">
+      <h3 class="font-semibold mb-1">Liquidity risk in what you hold</h3>
+      <p class="text-sm muted mb-3">
+        How many sessions the mutual fund industry would need to exit these same stocks
+        at 20% of average daily volume. High numbers mean crowded positions — everyone
+        leaves through the same door. Relative ranking, not a forecast.
+      </p>
+      <div id="crowding" class="text-sm"></div>
+    </section>
+
+    <section class="card p-5 mb-6">
+      <h3 class="font-semibold mb-3">Holdings</h3>
+      <div class="overflow-x-auto"><div id="holdings" class="text-sm"></div></div>
+    </section>
+
+    <p class="text-xs muted leading-relaxed" id="note"></p>
+  </div>
+
+  <div id="loading" class="card p-8 text-center muted">Fetching your holdings from Angel One…</div>
+
+  <footer class="text-xs muted mt-10 leading-relaxed">
+    Read-only access. This application contains no code path that can place, modify or
+    cancel an order, or move funds. Informational only — not investment advice.
+    Mutual fund and equity investments are subject to market risks.
+  </footer>
+</div>
+
+<script>
+const inr = n => "₹" + Number(n||0).toLocaleString("en-IN", {maximumFractionDigits:0});
+
+async function load(){
+  const s = await (await fetch("/api/session")).json();
+  if(!s.signed_in){ location.href = "/login-page"; return; }
+  document.getElementById("sessionInfo").textContent =
+    "Signed in with Angel One · session ends " + new Date(s.expires_at).toLocaleString("en-IN");
+
+  const res = await fetch("/api/me/holdings");
+  document.getElementById("loading").classList.add("hidden");
+  if(!res.ok){
+    const d = await res.json().catch(()=>({detail:"Unknown error"}));
+    document.getElementById("error").classList.remove("hidden");
+    document.getElementById("errorMsg").textContent = d.detail || "Unknown error";
+    return;
+  }
+  render(await res.json());
+}
+
+function render(d){
+  document.getElementById("content").classList.remove("hidden");
+  const t = d.totals || {};
+  document.getElementById("k1").textContent = inr(t.total_value);
+  document.getElementById("k2").textContent = inr(t.total_invested);
+  const pnl = t.total_pnl || 0;
+  const k3 = document.getElementById("k3");
+  k3.textContent = (pnl>=0?"+":"") + inr(pnl);
+  k3.className = "text-xl font-bold mt-1 " + (pnl>=0?"text-emerald-400":"text-red-400");
+  document.getElementById("k3s").textContent = (t.total_pnl_pct||0).toFixed(2) + "%";
+
+  const sm = d.summary || {};
+  document.getElementById("k4").textContent = sm.top_holding || "—";
+  document.getElementById("k4s").textContent = (sm.top_holding_pct||0) + "% of portfolio";
+  document.getElementById("concText").textContent =
+    `Top 5 are ${sm.top_5_pct||0}% and top 10 are ${sm.top_10_pct||0}% of your portfolio, across ${sm.unique_companies||0} companies.`;
+
+  const H = (d.holdings||[]).slice().sort((a,b)=>b.weight_pct-a.weight_pct).slice(0,12);
+  new Chart(document.getElementById("chartHoldings"), {
+    type:"bar",
+    data:{labels:H.map(h=>h.company_name||h.symbol),
+          datasets:[{data:H.map(h=>h.weight_pct), backgroundColor:"#34d399"}]},
+    options:{indexAxis:"y", plugins:{legend:{display:false}},
+             scales:{x:{ticks:{color:"#8b9bb0"},grid:{color:"#1e2936"}},
+                     y:{ticks:{color:"#e6edf3",font:{size:10}},grid:{display:false}}}}
+  });
+
+  const S = d.sectors || [];
+  if(S.length){
+    new Chart(document.getElementById("chartSectors"), {
+      type:"doughnut",
+      data:{labels:S.map(x=>x.sector),
+            datasets:[{data:S.map(x=>x.weight_pct),
+              backgroundColor:["#34d399","#60a5fa","#f472b6","#fbbf24","#a78bfa","#f87171","#22d3ee","#4ade80","#fb923c"]}]},
+      options:{plugins:{legend:{position:"right",labels:{color:"#8b9bb0",font:{size:11}}}}}
+    });
+  }
+
+  const C = d.crowding || [];
+  document.getElementById("crowding").innerHTML = C.length ? `
+    <table class="w-full text-left"><thead class="muted text-xs"><tr>
+      <th class="py-1">Company</th><th class="text-right">MF % of free float</th><th class="text-right">Days to exit</th>
+    </tr></thead><tbody>${C.map(r=>`<tr class="border-t border-[#1e2936]">
+      <td class="py-1.5">${r.company_name}</td>
+      <td class="text-right">${r.mf_pct_of_free_float}%</td>
+      <td class="text-right font-semibold ${r.days_to_liquidate>15?'text-red-400':r.days_to_liquidate>5?'text-amber-400':'text-emerald-400'}">${r.days_to_liquidate}</td>
+    </tr>`).join("")}</tbody></table>`
+    : `<p class="muted">None of your holdings are in the covered universe yet.</p>`;
+
+  document.getElementById("holdings").innerHTML = `
+    <table class="w-full text-left"><thead class="muted text-xs"><tr>
+      <th class="py-1">Symbol</th><th>Qty</th><th class="text-right">Avg</th>
+      <th class="text-right">LTP</th><th class="text-right">Value</th>
+      <th class="text-right">Weight</th><th class="text-right">P&amp;L</th>
+    </tr></thead><tbody>${(d.holdings||[]).map(h=>`<tr class="border-t border-[#1e2936]">
+      <td class="py-1.5">${h.symbol||""}</td><td class="muted">${h.quantity}</td>
+      <td class="text-right muted">${inr(h.average_price)}</td>
+      <td class="text-right">${inr(h.ltp)}</td>
+      <td class="text-right">${inr(h.value)}</td>
+      <td class="text-right">${(h.weight_pct||0).toFixed(2)}%</td>
+      <td class="text-right ${h.pnl>=0?'text-emerald-400':'text-red-400'}">${(h.pnl>=0?"+":"")+inr(h.pnl)}</td>
+    </tr>`).join("")}</tbody></table>`;
+
+  document.getElementById("note").textContent = (d.note||"") + " " + (d.disclaimer||"");
+}
+load();
+</script>
+</body>
+</html>

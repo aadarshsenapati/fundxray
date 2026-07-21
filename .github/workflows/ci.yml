@@ -1,0 +1,46 @@
+name: ci
+
+on:
+  push: { branches: [ main ] }
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11", cache: pip }
+
+      - name: Install
+        run: |
+          python -m pip install -U pip
+          grep -v '^pyspark' requirements.txt > req.txt
+          pip install -r req.txt
+
+      - name: Lint
+        run: ruff check .
+
+      - name: Unit and property tests
+        run: pytest tests -q
+        env: { PYTHONPATH: ".:core" }
+
+      - name: End-to-end pipeline smoke test
+        env: { PYTHONPATH: ".:core" }
+        run: |
+          python -m pipelines.ingestion.reference.seed
+          python -m serving.artifacts.build
+
+      - name: Data quality gates must pass
+        env: { PYTHONPATH: ".:core" }
+        run: |
+          python - <<'PY'
+          import duckdb, sys
+          from fundxray_core.config import settings
+          q = duckdb.connect(str(settings.artifact_path), read_only=True) \
+                   .execute("SELECT metric, passed FROM quality").fetchall()
+          failed = [m for m, p in q if not p]
+          for m, p in q:
+              print(f"{'PASS' if p else 'FAIL'}  {m}")
+          sys.exit(1 if failed else 0)
+          PY

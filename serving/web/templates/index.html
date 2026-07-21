@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>FundXRay — what you actually own</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  body{background:#0b0f14;color:#e6edf3;font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
+  .card{background:#111820;border:1px solid #1e2936;border-radius:14px}
+  .muted{color:#8b9bb0}
+  input[type=number]{background:#0b0f14;border:1px solid #263444;color:#e6edf3}
+</style>
+</head>
+<body class="min-h-screen">
+<div class="max-w-6xl mx-auto px-5 py-10">
+
+  <header class="mb-8">
+    <h1 class="text-3xl font-bold tracking-tight">FundXRay</h1>
+    <p class="muted mt-1">You think you own 7 mutual funds. Let's see what you actually own.</p>
+    <p class="text-xs muted mt-2">Built on SEBI-mandated public disclosures · Informational only, not investment advice</p>
+  </header>
+
+  <section class="card p-5 mb-6">
+    <h2 class="font-semibold mb-1">Your portfolio</h2>
+    <p class="text-sm muted mb-4">Enter the rupee value you hold in each scheme. Leave blank to skip.</p>
+    <div id="funds" class="grid md:grid-cols-2 gap-3"></div>
+    <div class="mt-5 flex items-center gap-3">
+      <button id="run" class="bg-emerald-500 hover:bg-emerald-400 text-black font-semibold px-5 py-2 rounded-lg">Run X-Ray</button>
+      <label class="text-sm muted flex items-center gap-2">
+        <input type="checkbox" id="explain"/> Explain in plain language (Groq)
+      </label>
+      <span id="status" class="text-sm muted"></span>
+    </div>
+  </section>
+
+  <div id="results" class="hidden">
+    <section class="grid md:grid-cols-4 gap-4 mb-6">
+      <div class="card p-4"><div class="text-xs muted">TRUE TOP HOLDING</div><div id="k1" class="text-xl font-bold mt-1"></div><div id="k1s" class="text-sm muted"></div></div>
+      <div class="card p-4"><div class="text-xs muted">TOP 10 CONCENTRATION</div><div id="k2" class="text-xl font-bold mt-1"></div><div class="text-sm muted">of your portfolio</div></div>
+      <div class="card p-4"><div class="text-xs muted">UNIQUE COMPANIES</div><div id="k3" class="text-xl font-bold mt-1"></div><div id="k3s" class="text-sm muted"></div></div>
+      <div class="card p-4"><div class="text-xs muted">ANNUAL FEE</div><div id="k4" class="text-xl font-bold mt-1"></div><div id="k4s" class="text-sm muted"></div></div>
+    </section>
+
+    <section class="grid md:grid-cols-2 gap-4 mb-6">
+      <div class="card p-5"><h3 class="font-semibold mb-3">Look-through holdings</h3><canvas id="chartHoldings" height="260"></canvas></div>
+      <div class="card p-5"><h3 class="font-semibold mb-3">Sector exposure</h3><canvas id="chartSectors" height="260"></canvas></div>
+    </section>
+
+    <section class="card p-5 mb-6">
+      <h3 class="font-semibold mb-1">Fund overlap</h3>
+      <p class="text-sm muted mb-3">Under 30% healthy · 30–50% monitor · above 50% the second fund adds limited diversification</p>
+      <div id="overlaps" class="space-y-2"></div>
+    </section>
+
+    <section id="narrativeBox" class="card p-5 mb-6 hidden">
+      <h3 class="font-semibold mb-2">In plain language</h3>
+      <div id="narrative" class="text-sm leading-relaxed whitespace-pre-wrap muted"></div>
+    </section>
+
+    <p id="asof" class="text-xs muted"></p>
+  </div>
+
+  <section class="card p-5 mt-8">
+    <h3 class="font-semibold mb-1">Days-to-Liquidate — industry crowding</h3>
+    <p class="text-sm muted mb-3">Sessions the mutual fund industry would need to exit at 20% of average daily volume. Relative ranking, not a forecast.</p>
+    <div id="dtl" class="text-sm"></div>
+  </section>
+
+  <footer class="text-xs muted mt-10 leading-relaxed">
+    FundXRay is an informational tool built on public regulatory disclosures. It does not rank, recommend,
+    or assess the suitability of any scheme. Investment advice in India is regulated by SEBI.
+    Mutual fund investments are subject to market risks; read all scheme related documents carefully.
+    Not affiliated with AMFI, SEBI, Angel One, or any asset management company.
+  </footer>
+</div>
+
+<script>
+const fmt = n => "₹" + Number(n).toLocaleString("en-IN", {maximumFractionDigits:0});
+let schemes = [], chartH, chartS;
+
+async function init(){
+  schemes = await (await fetch("/api/schemes")).json();
+  document.getElementById("funds").innerHTML = schemes.map(s => `
+    <div class="flex items-center gap-3">
+      <div class="flex-1 min-w-0">
+        <div class="text-sm truncate">${s.scheme_name}</div>
+        <div class="text-xs muted">${s.category} · TER ${s.ter_regular_pct}%</div>
+      </div>
+      <input type="number" min="0" step="1000" placeholder="0" data-code="${s.scheme_code}"
+             class="w-32 px-2 py-1 rounded-md text-sm"/>
+    </div>`).join("");
+  loadDtl();
+}
+
+async function loadDtl(){
+  const d = await (await fetch("/api/dtl?limit=10")).json();
+  document.getElementById("dtl").innerHTML = `
+    <table class="w-full text-left">
+      <thead class="muted text-xs"><tr>
+        <th class="py-1">Company</th><th>Cap</th><th class="text-right">MF holding</th>
+        <th class="text-right">% free float</th><th class="text-right">Days to exit</th></tr></thead>
+      <tbody>${d.rows.map(r=>`<tr class="border-t border-[#1e2936]">
+        <td class="py-1.5">${r.company_name}</td>
+        <td class="muted">${r.cap_bucket}</td>
+        <td class="text-right">₹${Number(r.mf_holding_cr).toLocaleString("en-IN")} cr</td>
+        <td class="text-right">${r.mf_pct_of_free_float}%</td>
+        <td class="text-right font-semibold ${r.days_to_liquidate>15?'text-red-400':r.days_to_liquidate>5?'text-amber-400':'text-emerald-400'}">${r.days_to_liquidate}</td>
+      </tr>`).join("")}</tbody></table>`;
+}
+
+document.getElementById("run").onclick = async () => {
+  const holdings = {};
+  document.querySelectorAll("input[data-code]").forEach(i => {
+    const v = parseFloat(i.value); if (v > 0) holdings[i.dataset.code] = v;
+  });
+  const st = document.getElementById("status");
+  if (!Object.keys(holdings).length){ st.textContent = "Enter at least one amount."; return; }
+  st.textContent = "Analysing…";
+
+  const res = await fetch("/api/xray", {
+    method:"POST", headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({holdings, explain: document.getElementById("explain").checked})
+  });
+  if (!res.ok){ st.textContent = "Error: " + (await res.text()); return; }
+  const d = await res.json();
+  st.textContent = "";
+  render(d);
+};
+
+function render(d){
+  document.getElementById("results").classList.remove("hidden");
+  document.getElementById("k1").textContent = d.summary.top_holding ?? "—";
+  document.getElementById("k1s").textContent = d.summary.top_holding_pct + "% of your portfolio";
+  document.getElementById("k2").textContent = d.summary.top_10_pct + "%";
+  document.getElementById("k3").textContent = d.summary.unique_companies;
+  document.getElementById("k3s").textContent = "across " + d.fund_count + " funds";
+  document.getElementById("k4").textContent = fmt(d.annual_fee_regular);
+  document.getElementById("k4s").textContent =
+    "direct plan: " + fmt(d.annual_fee_direct) + " (" + fmt(d.annual_fee_regular - d.annual_fee_direct) + "/yr less)";
+
+  const H = d.top_holdings.slice(0,12);
+  chartH?.destroy();
+  chartH = new Chart(document.getElementById("chartHoldings"), {
+    type:"bar",
+    data:{labels:H.map(h=>h.instrument_name_raw),
+          datasets:[{data:H.map(h=>h.weight_pct), backgroundColor:"#34d399"}]},
+    options:{indexAxis:"y", plugins:{legend:{display:false}},
+             scales:{x:{ticks:{color:"#8b9bb0"},grid:{color:"#1e2936"}},
+                     y:{ticks:{color:"#e6edf3",font:{size:10}},grid:{display:false}}}}
+  });
+
+  chartS?.destroy();
+  chartS = new Chart(document.getElementById("chartSectors"), {
+    type:"doughnut",
+    data:{labels:d.sectors.map(s=>s.sector),
+          datasets:[{data:d.sectors.map(s=>s.weight_pct),
+                     backgroundColor:["#34d399","#60a5fa","#f472b6","#fbbf24","#a78bfa","#f87171","#22d3ee","#4ade80","#fb923c"]}]},
+    options:{plugins:{legend:{position:"right",labels:{color:"#8b9bb0",font:{size:11}}}}}
+  });
+
+  document.getElementById("overlaps").innerHTML = d.overlaps.length ? d.overlaps.map(o=>{
+    const c = o.overlap_pct>50?"bg-red-400":o.overlap_pct>30?"bg-amber-400":"bg-emerald-400";
+    return `<div>
+      <div class="flex justify-between text-sm"><span>${o.scheme_a_name} ↔ ${o.scheme_b_name}</span>
+      <span class="font-semibold">${o.overlap_pct}%</span></div>
+      <div class="h-1.5 bg-[#1e2936] rounded mt-1"><div class="${c} h-1.5 rounded" style="width:${Math.min(o.overlap_pct,100)}%"></div></div>
+    </div>`;}).join("") : `<p class="text-sm muted">Add two or more funds to see overlap.</p>`;
+
+  if (d.narrative){
+    document.getElementById("narrativeBox").classList.remove("hidden");
+    document.getElementById("narrative").textContent = d.narrative;
+  }
+  document.getElementById("asof").textContent =
+    "Holdings as of " + d.as_of + ". " + d.disclaimer;
+  document.getElementById("results").scrollIntoView({behavior:"smooth"});
+}
+init();
+</script>
+</body>
+</html>

@@ -1,0 +1,31 @@
+# Render blueprint — free tier.
+#
+# Serving is a stateless API over a precomputed artifact, so the web service
+# needs no database and no Spark. The artifact is rebuilt by a scheduled job and
+# published to object storage; the API pulls it on boot and on demand.
+services:
+  - type: web
+    name: fundxray
+    runtime: docker
+    plan: free
+    dockerfilePath: ./infra/docker/api.Dockerfile
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHONPATH
+        value: /app:/app/core
+      - key: ARTIFACT_PATH
+        value: /app/data/artifacts/fundxray.duckdb
+      - key: ARTIFACT_URL          # public URL of the published artifact
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: SMARTAPI_API_KEY
+        sync: false
+      - key: SMARTAPI_CLIENT_ID
+        sync: false
+      - key: SMARTAPI_PASSWORD
+        sync: false
+      - key: SMARTAPI_TOTP_SECRET
+        sync: false
+      - key: DTL_PARTICIPATION_RATE
+        value: "0.20"

@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Sign in — FundXRay</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  body{background:#0b0f14;color:#e6edf3;font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
+  .card{background:#111820;border:1px solid #1e2936;border-radius:16px}
+  .muted{color:#8b9bb0}
+</style>
+</head>
+<body class="min-h-screen flex items-center justify-center px-5 py-10">
+<div class="w-full max-w-md">
+
+  <div class="text-center mb-8">
+    <h1 class="text-3xl font-bold tracking-tight">FundXRay</h1>
+    <p class="muted mt-2">See what you actually own.</p>
+  </div>
+
+  <div class="card p-7">
+    <h2 class="text-lg font-semibold mb-2">Sign in with Angel One</h2>
+    <p class="text-sm muted mb-6">
+      You'll be taken to Angel One's own login page. Enter your client code, PIN and
+      TOTP there &mdash; then you'll come straight back here.
+    </p>
+
+    <a href="/login"
+       class="block w-full text-center bg-emerald-500 hover:bg-emerald-400 text-black font-semibold px-5 py-3 rounded-lg transition">
+      Continue to Angel One &rarr;
+    </a>
+
+    <div class="mt-7 pt-6 border-t border-[#1e2936]">
+      <h3 class="text-sm font-semibold mb-3">&#128274; What we never see</h3>
+      <ul class="text-sm muted space-y-2">
+        <li><span class="text-emerald-400">&#10003;</span> Your PIN &mdash; typed on angelone.in, not here</li>
+        <li><span class="text-emerald-400">&#10003;</span> Your TOTP secret &mdash; never requested, never stored</li>
+        <li><span class="text-emerald-400">&#10003;</span> Your password &mdash; it never reaches this server</li>
+      </ul>
+
+      <h3 class="text-sm font-semibold mt-5 mb-3">What this app can do</h3>
+      <ul class="text-sm muted space-y-2">
+        <li><span class="text-emerald-400">&#10003;</span> <strong class="text-[#e6edf3]">Read</strong> your holdings, to analyse them</li>
+        <li><span class="text-red-400">&#10007;</span> Place, modify or cancel orders &mdash; no such code exists in this app</li>
+        <li><span class="text-red-400">&#10007;</span> Move money or withdraw funds</li>
+      </ul>
+
+      <p class="text-xs muted mt-5 leading-relaxed">
+        Your session lives on the server only and ends at midnight IST, or when you sign out.
+        Your browser holds nothing but an opaque session id.
+      </p>
+    </div>
+  </div>
+
+  <div class="card p-5 mt-4">
+    <h3 class="text-sm font-semibold mb-1">No Angel One account?</h3>
+    <p class="text-sm muted">
+      You can still analyse your mutual funds &mdash;
+      <a href="/" class="text-emerald-400 hover:underline">enter schemes manually or upload a CAS</a>.
+    </p>
+  </div>
+
+  <p class="text-xs muted mt-8 text-center leading-relaxed">
+    FundXRay is an informational tool built on public SEBI-mandated disclosures.
+    Not investment advice. Not affiliated with Angel One, AMFI or SEBI.
+  </p>
+</div>
+</body>
+</html>

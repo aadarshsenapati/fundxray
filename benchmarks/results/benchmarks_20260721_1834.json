@@ -1,0 +1,40 @@
+{
+  "generated_at": "2026-07-21T18:34:00.144807",
+  "cores": 2,
+  "spark": "3.5.1",
+  "results": [
+    {
+      "group": "2-partition-pruning",
+      "variant": "full scan (24 months)",
+      "seconds": 9.73,
+      "result": 2000
+    },
+    {
+      "group": "2-partition-pruning",
+      "variant": "pruned to 1 month",
+      "seconds": 0.93,
+      "result": 2000
+    },
+    {
+      "group": "5-shuffle-partitions",
+      "variant": "spark.sql.shuffle.partitions=8",
+      "seconds": 6.2,
+      "result": 894128,
+      "shuffle_partitions": 8
+    },
+    {
+      "group": "5-shuffle-partitions",
+      "variant": "spark.sql.shuffle.partitions=32",
+      "seconds": 5.95,
+      "result": 894128,
+      "shuffle_partitions": 32
+    },
+    {
+      "group": "5-shuffle-partitions",
+      "variant": "spark.sql.shuffle.partitions=200",
+      "seconds": 8.16,
+      "result": 894128,
+      "shuffle_partitions": 200
+    }
+  ]
+}

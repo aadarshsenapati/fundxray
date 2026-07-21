@@ -1,0 +1,64 @@
+# --- Secrets ----------------------------------------------------------------
+.env
+*.pem
+*.key
+credentials.json
+
+# --- Data (never commit warehouse or raw source files) ----------------------
+data/raw/*
+data/staging/*
+data/warehouse/*
+data/artifacts/*
+!data/**/.gitkeep
+*.duckdb
+*.parquet
+*.orc
+*.avro
+*.xls
+*.xlsx
+*.pdf
+
+# --- Python -----------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+
+# --- Spark / Hadoop ---------------------------------------------------------
+spark-warehouse/
+metastore_db/
+derby.log
+checkpoints/
+*.crc
+_SUCCESS
+
+# --- Dagster / Airflow ------------------------------------------------------
+.dagster_home/
+dagster_home/
+tmp*/
+logs/
+airflow.db
+
+# --- Notebooks --------------------------------------------------------------
+.ipynb_checkpoints/
+
+# --- Editors / OS -----------------------------------------------------------
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# --- Node (web) -------------------------------------------------------------
+node_modules/
+dist/
+.next/
+
+# --- test caches ---
+.hypothesis/
+.pytest_cache/

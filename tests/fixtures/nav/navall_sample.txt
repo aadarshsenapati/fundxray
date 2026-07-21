@@ -1,0 +1,24 @@
+Scheme Code;ISIN Div Payout/ ISIN Growth;ISIN Div Reinvestment;Scheme Name;Net Asset Value;Date
+ 
+Open Ended Schemes(Debt Scheme - Banking and PSU Fund)
+ 
+Aditya Birla Sun Life Mutual Fund
+ 
+119551;INF209KA12Z1;INF209KA13Z9;Aditya Birla Sun Life Banking & PSU Debt Fund  - DIRECT - IDCW;106.5737;20-Jul-2026
+108273;INF209K01LV0;-;Aditya Birla Sun Life Banking & PSU Debt Fund - Regular Plan-Growth;386.4219;20-Jul-2026
+119550;INF209K01YN0;-;Aditya Birla Sun Life Banking & PSU Debt Fund- Direct Plan-Growth;402.4844;20-Jul-2026
+ 
+Axis Mutual Fund
+ 
+128952;INF846K01NF8;-;Axis Banking & PSU Debt Fund - Direct Plan - Bonus Option;1532.8272;14-Jun-2017
+120437;-;INF846K01CU0;Axis Banking & PSU Debt Fund - Direct Plan - Daily IDCW;1037.4790;20-Jul-2026
+117446;INF846K01CB0;-;Axis Banking & PSU Debt Fund - Regular Plan - Growth option;2788.5080;20-Jul-2026
+ 
+Open Ended Schemes(Equity Scheme - Large Cap Fund)
+ 
+Bajaj Finserv Mutual Fund
+ 
+152164;INF0QA701649;INF0QA701631;Bajaj Finserv Large Cap Fund-  Direct Plan-Monthly- IDCW;10.9796;20-Jul-2026
+152165;INF0QA701557;-;Bajaj Finserv Large Cap Fund- Regular Plan- Growth;11.9874;20-Jul-2026
+119999;INVALIDISIN;-;Broken Row Fund - Direct Plan - Growth;N.A.;20-Jul-2026
+120000;INF846K01CB0;-;Missing NAV Fund - Regular Plan - Growth;;20-Jul-2026
