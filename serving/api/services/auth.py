@@ -20,6 +20,19 @@ short-lived tokens. Credentials never touch this server.
             ->  Angel One authenticates the user
             ->  GET /auth/callback?auth_token=..&feed_token=..&state=..
 
+BRING-YOUR-OWN-KEY
+-------------------
+`api_key` above identifies a *registered SmartAPI app*, not a person. By
+default this server can supply its own key (SMARTAPI_API_KEY in .env) so the
+whole userbase shares one registered app. But a visitor can instead supply
+their OWN SmartAPI app key — generated for free at
+https://smartapi.angelone.in/ — so they aren't relying on this deployment's
+registration at all. Whichever key was used for a given login is remembered
+for the lifetime of that session (`Session.api_key`), and every subsequent
+SmartAPI call for that user re-uses it (see serving/api/services/portfolio.py).
+The key travels through the CSRF state nonce, never through a cookie or
+anything client-writable after the fact.
+
 Additional guarantees:
   * tokens live server-side only, keyed by an opaque signed session id; the
     browser never receives a broker token
@@ -38,6 +51,7 @@ import secrets
 import threading
 from dataclasses import dataclass, field
 from hashlib import sha256
+from typing import Optional
 from urllib.parse import urlencode
 from zoneinfo import ZoneInfo
 
@@ -62,6 +76,7 @@ class Session:
     feed_token: str = ""
     refresh_token: str = ""
     client_code: str = ""
+    api_key: str = ""          # the SmartAPI app key this login actually used
     created_at: dt.datetime = field(default_factory=lambda: dt.datetime.now(IST))
 
     @property
@@ -85,32 +100,40 @@ class SessionStore:
 
     def __init__(self) -> None:
         self._data: dict[str, Session] = {}
-        self._nonces: dict[str, dt.datetime] = {}
+        # nonce -> (issued_at, api_key). api_key is "" when the visitor chose
+        # to use this server's shared default key rather than their own.
+        self._nonces: dict[str, tuple[dt.datetime, str]] = {}
         self._lock = threading.Lock()
 
-    # -- CSRF nonce --------------------------------------------------------
-    def issue_state(self) -> str:
+    # -- CSRF nonce ----------------------------------------------------------
+    def issue_state(self, api_key: str = "") -> str:
         nonce = secrets.token_urlsafe(24)
         with self._lock:
-            self._nonces[nonce] = dt.datetime.now(IST)
+            self._nonces[nonce] = (dt.datetime.now(IST), api_key)
             self._prune_nonces()
         return nonce
 
-    def consume_state(self, nonce: str) -> bool:
+    def consume_state(self, nonce: str) -> Optional[str]:
+        """Returns the api_key that was associated with this state (possibly
+        an empty string, meaning "use the server default"), or None if the
+        state was missing/expired/already used. Callers must check for None
+        specifically — "" is a valid, successful result."""
         with self._lock:
             self._prune_nonces()
-            return self._nonces.pop(nonce, None) is not None
+            entry = self._nonces.pop(nonce, None)
+            return entry[1] if entry is not None else None
 
     def _prune_nonces(self) -> None:
         cutoff = dt.datetime.now(IST) - dt.timedelta(minutes=15)
-        for k in [k for k, v in self._nonces.items() if v < cutoff]:
+        for k in [k for k, v in self._nonces.items() if v[0] < cutoff]:
             self._nonces.pop(k, None)
 
-    # -- sessions ----------------------------------------------------------
+    # -- sessions --------------------------------------------------------------
     def create(self, auth_token: str, feed_token: str = "",
-               refresh_token: str = "", client_code: str = "") -> Session:
+               refresh_token: str = "", client_code: str = "",
+               api_key: str = "") -> Session:
         sid = secrets.token_urlsafe(32)
-        s = Session(sid, auth_token, feed_token, refresh_token, client_code)
+        s = Session(sid, auth_token, feed_token, refresh_token, client_code, api_key)
         with self._lock:
             self._data[sid] = s
             self._prune_sessions()
@@ -145,7 +168,7 @@ class SessionStore:
 store = SessionStore()
 
 
-# -- cookie signing --------------------------------------------------------
+# -- cookie signing ----------------------------------------------------------
 def sign(sid: str) -> str:
     mac = hmac.new(_SECRET, sid.encode(), sha256).hexdigest()[:32]
     return f"{sid}.{mac}"
@@ -159,14 +182,22 @@ def unsign(value: str | None) -> str | None:
     return sid if hmac.compare_digest(mac, expected) else None
 
 
-# -- login url -------------------------------------------------------------
-def login_url(redirect_url: str, state: str) -> str:
-    if not settings.smartapi_api_key:
+# -- login url -----------------------------------------------------------------
+def login_url(redirect_url: str, state: str, api_key: str | None = None) -> str:
+    """Build the Angel One Publisher Login URL.
+
+    `api_key` is the key that will actually be used for this login: either a
+    visitor-supplied key (bring-your-own) or, if none was given, this server's
+    own SMARTAPI_API_KEY. At least one of the two must be available.
+    """
+    key = (api_key or "").strip() or settings.smartapi_api_key
+    if not key:
         raise RuntimeError(
-            "SMARTAPI_API_KEY is not set. Register an app at "
-            "https://smartapi.angelone.in/ and set the key in .env.")
+            "No SmartAPI app key available. Either set SMARTAPI_API_KEY in "
+            "this server's .env, or have the visitor supply their own key "
+            "(register one free at https://smartapi.angelone.in/).")
     return f"{PUBLISHER_LOGIN_URL}?" + urlencode({
-        "api_key": settings.smartapi_api_key,
+        "api_key": key,
         "redirect_url": redirect_url,
         "state": state,
     })
