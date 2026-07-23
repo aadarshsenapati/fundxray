@@ -10,6 +10,11 @@ Scope caveat worth stating plainly to users: these are DEMAT holdings. Equities
 appear, and so do mutual fund units held in demat form — but units held in the
 traditional statement (SoA) form do not. Most Indian SIP investors hold SoA
 units, so the CAS upload path remains the complete picture.
+
+`api_key` is threaded through every call here rather than read from settings
+directly, because a visitor may have signed in with their own SmartAPI app key
+(bring-your-own-key) rather than this server's shared default — see
+serving/api/services/auth.py.
 """
 from __future__ import annotations
 
@@ -28,23 +33,23 @@ ALL_HOLDING_URL = f"{BASE}/rest/secure/angelbroking/portfolio/v1/getAllHolding"
 _bucket = TokenBucket(settings.smartapi_rate_limit_rps)
 
 
-def _headers(auth_token: str) -> dict:
+def _headers(auth_token: str, api_key: str) -> dict:
     return {
         "Authorization": f"Bearer {auth_token}",
         "Content-Type": "application/json",
         "Accept": "application/json",
         "X-UserType": "USER",
         "X-SourceID": "WEB",
-        "X-PrivateKey": settings.smartapi_api_key,
+        "X-PrivateKey": api_key,
         "X-ClientLocalIP": "127.0.0.1",
         "X-ClientPublicIP": "127.0.0.1",
         "X-MACAddress": "00:00:00:00:00:00",
     }
 
 
-def _get(url: str, auth_token: str, timeout: int = 30) -> dict:
+def _get(url: str, auth_token: str, api_key: str, timeout: int = 30) -> dict:
     _bucket.acquire()
-    r = requests.get(url, headers=_headers(auth_token), timeout=timeout)
+    r = requests.get(url, headers=_headers(auth_token, api_key), timeout=timeout)
     r.raise_for_status()
     payload = r.json()
     if not payload.get("status", True):
@@ -52,8 +57,9 @@ def _get(url: str, auth_token: str, timeout: int = 30) -> dict:
     return payload.get("data") or {}
 
 
-def fetch_holdings(auth_token: str) -> list[dict]:
-    data = _get(HOLDING_URL, auth_token)
+def fetch_holdings(auth_token: str, api_key: str | None = None) -> list[dict]:
+    key = api_key or settings.smartapi_api_key
+    data = _get(HOLDING_URL, auth_token, key)
     rows = data if isinstance(data, list) else data.get("holdings", [])
     out = []
     for h in rows or []:
@@ -76,8 +82,9 @@ def fetch_holdings(auth_token: str) -> list[dict]:
     return out
 
 
-def fetch_totals(auth_token: str) -> dict:
-    data = _get(ALL_HOLDING_URL, auth_token)
+def fetch_totals(auth_token: str, api_key: str | None = None) -> dict:
+    key = api_key or settings.smartapi_api_key
+    data = _get(ALL_HOLDING_URL, auth_token, key)
     t = (data or {}).get("totalholding") or {}
     return {
         "total_value": float(t.get("totalholdingvalue") or 0),
