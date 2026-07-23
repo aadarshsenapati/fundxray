@@ -3,786 +3,102 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>FundXRay — what you actually own</title>
+<title>Sign in — FundXRay</title>
 <script src="https://cdn.tailwindcss.com"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <style>
-  :root{
-    --bg:#0b0f14; --card:#111820; --line:#1e2936; --line-soft:#182330;
-    --ink:#e6edf3; --muted:#8b9bb0; --accent:#34d399; --accent-dim:#1f8f66;
-    --amber:#fbbf24; --red:#f87171; --blue:#60a5fa;
-  }
-  *{scrollbar-color: var(--line) var(--bg);}
-  body{background:var(--bg);color:var(--ink);font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
-  .card{background:var(--card);border:1px solid var(--line);border-radius:14px}
-  .muted{color:var(--muted)}
-  input[type=number],input[type=text],input[type=password],select{
-    background:var(--bg);border:1px solid #263444;color:var(--ink);border-radius:8px;
-  }
-  input:focus,select:focus,button:focus,a:focus{outline:2px solid var(--accent);outline-offset:2px}
-  .btn-primary{background:var(--accent);color:#052018;font-weight:600;border-radius:10px;transition:background .15s}
-  .btn-primary:hover{background:#5eead4}
-  .btn-primary:disabled{opacity:.5;cursor:not-allowed}
-  .btn-ghost{background:var(--line-soft);color:var(--ink);border-radius:10px;transition:background .15s}
-  .btn-ghost:hover{background:#233042}
-  .navlink{color:var(--muted);font-size:.875rem;padding:.4rem .7rem;border-radius:8px;transition:.15s}
-  .navlink:hover{color:var(--ink);background:var(--line-soft)}
-  .navlink.active{color:var(--accent);background:rgba(52,211,153,.08)}
-  section{scroll-margin-top:5.5rem}
-  .badge{font-size:.7rem;padding:.1rem .5rem;border-radius:999px;font-weight:600;letter-spacing:.02em}
-  .badge-pass{background:rgba(52,211,153,.12);color:var(--accent)}
-  .badge-fail{background:rgba(248,113,113,.12);color:var(--red)}
-  .tab-btn{padding:.4rem .9rem;border-radius:8px;font-size:.85rem;color:var(--muted);transition:.15s}
-  .tab-btn.active{background:var(--line-soft);color:var(--ink)}
-  ::-webkit-scrollbar{height:8px;width:8px}
-  ::-webkit-scrollbar-thumb{background:var(--line);border-radius:8px}
-  .skeleton{background:linear-gradient(90deg,#141c26 25%,#1a2430 37%,#141c26 63%);background-size:400% 100%;animation:sk 1.4s ease infinite}
-  @keyframes sk{0%{background-position:100% 0}100%{background-position:0 0}}
-  @media (prefers-reduced-motion: reduce){.skeleton{animation:none}}
+  body{background:#0b0f14;color:#e6edf3;font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
+  .card{background:#111820;border:1px solid #1e2936;border-radius:16px}
+  .muted{color:#8b9bb0}
+  input[type=text]{background:#0b0f14;border:1px solid #263444;color:#e6edf3;border-radius:8px}
+  input[type=text]:focus{outline:2px solid #34d399;outline-offset:1px}
 </style>
 </head>
-<body class="min-h-screen">
+<body class="min-h-screen flex items-center justify-center px-5 py-10">
+<div class="w-full max-w-md">
 
-<!-- ============ NAV ============ -->
-<header class="sticky top-0 z-40 backdrop-blur border-b" style="background:rgba(11,15,20,.85);border-color:var(--line)">
-  <div class="max-w-6xl mx-auto px-5 py-3 flex items-center justify-between gap-4">
-    <a href="/" class="font-bold tracking-tight text-lg shrink-0">FundXRay</a>
-    <nav class="hidden md:flex items-center gap-1 overflow-x-auto" id="mainNav">
-      <a href="#xray" class="navlink active">X-Ray</a>
-      <a href="#health" class="navlink">Fund Health</a>
-      <a href="#drift" class="navlink">Style Drift</a>
-      <a href="#turnover" class="navlink">Turnover</a>
-      <a href="#liquidity" class="navlink">Liquidity</a>
-      <a href="#fees" class="navlink">Fee Calculator</a>
-      <a href="#quality" class="navlink">Data Quality</a>
-    </nav>
-    <a href="/dashboard" class="shrink-0 text-sm bg-[#1e2936] hover:bg-[#26333f] px-3 py-1.5 rounded-lg transition">
-      Sign in with Angel One
-    </a>
-  </div>
-</header>
-
-<div class="max-w-6xl mx-auto px-5 py-10">
-
-  <div class="mb-10">
-    <p class="muted mt-1 text-sm">You think you own 7 mutual funds. Let's see what you actually own.</p>
-    <p class="text-xs muted mt-2">Built on SEBI-mandated public disclosures · Informational only, not investment advice</p>
+  <div class="text-center mb-8">
+    <h1 class="text-3xl font-bold tracking-tight">FundXRay</h1>
+    <p class="muted mt-2">See what you actually own.</p>
   </div>
 
-  <!-- ============ X-RAY ============ -->
-  <section id="xray">
-    <div class="flex items-center justify-between mb-3">
-      <h2 class="text-xl font-bold">Fund X-Ray</h2>
-      <div class="flex gap-1 text-sm">
-        <button class="tab-btn active" data-tab="manual" onclick="switchEntryTab('manual')">Enter manually</button>
-        <button class="tab-btn" data-tab="cas" onclick="switchEntryTab('cas')">Upload CAS</button>
-      </div>
-    </div>
+  <div class="card p-7">
+    <h2 class="text-lg font-semibold mb-2">Sign in with Angel One</h2>
+    <p class="text-sm muted mb-5">
+      You'll be taken to Angel One's own login page. Enter your client code, PIN and
+      TOTP there &mdash; then you'll come straight back here.
+    </p>
 
-    <!-- manual entry -->
-    <div id="entryManual" class="card p-5 mb-6">
-      <p class="text-sm muted mb-1">Search for a fund and add it as a position. Add as many as you hold.</p>
-      <p class="text-xs muted mb-4">
-        Limited to schemes FundXRay has holdings data for — a demo set of 10 here.
-        A production deployment covers the full AMFI universe.
+    <form id="loginForm" action="/login" method="get" class="mb-1">
+      <label class="block text-xs muted mb-1.5" for="apiKey">
+        Your SmartAPI app key <span class="muted">(optional)</span>
+      </label>
+      <input type="text" id="apiKey" name="api_key" placeholder="paste your own key, or leave blank"
+             class="w-full px-3 py-2.5 text-sm mb-2" autocomplete="off" spellcheck="false"/>
+      <p class="text-xs muted mb-5 leading-relaxed">
+        This app doesn't run its own registered SmartAPI application by default &mdash;
+        you bring your own. It's free and takes a minute:
+        <a href="https://smartapi.angelone.in/" target="_blank" rel="noopener"
+           class="text-emerald-400 hover:underline">register an app at smartapi.angelone.in</a>,
+        copy the API key it gives you, and paste it above. Nothing else from that page
+        (no secret, no credentials) is needed here.
+        <span id="defaultKeyNote" class="hidden">
+          This deployment also has a shared default key configured, so you can leave
+          this field blank if you'd rather use that instead.
+        </span>
       </p>
+      <button type="submit"
+              class="block w-full text-center bg-emerald-500 hover:bg-emerald-400 text-black font-semibold px-5 py-3 rounded-lg transition">
+        Continue to Angel One &rarr;
+      </button>
+    </form>
 
-      <div class="relative mb-4">
-        <input type="text" id="fundSearch" placeholder="Search funds by name…"
-               class="w-full px-3 py-2.5 text-sm" autocomplete="off"
-               aria-label="Search funds" aria-expanded="false" role="combobox"/>
-        <div id="fundSuggestions"
-             class="hidden absolute z-30 mt-1 w-full card max-h-72 overflow-y-auto shadow-xl" role="listbox"></div>
-      </div>
+    <div class="mt-7 pt-6 border-t border-[#1e2936]">
+      <h3 class="text-sm font-semibold mb-3">&#128274; What we never see</h3>
+      <ul class="text-sm muted space-y-2">
+        <li><span class="text-emerald-400">&#10003;</span> Your PIN &mdash; typed on angelone.in, not here</li>
+        <li><span class="text-emerald-400">&#10003;</span> Your TOTP secret &mdash; never requested, never stored</li>
+        <li><span class="text-emerald-400">&#10003;</span> Your password &mdash; it never reaches this server</li>
+      </ul>
 
-      <div id="fundRows" class="space-y-2 mb-2">
-        <p id="fundRowsEmpty" class="text-sm muted">No funds added yet — search above to add your first one.</p>
-      </div>
+      <h3 class="text-sm font-semibold mt-5 mb-3">What this app can do</h3>
+      <ul class="text-sm muted space-y-2">
+        <li><span class="text-emerald-400">&#10003;</span> <strong class="text-[#e6edf3]">Read</strong> your holdings, to analyse them</li>
+        <li><span class="text-red-400">&#10007;</span> Place, modify or cancel orders &mdash; no such code exists in this app</li>
+        <li><span class="text-red-400">&#10007;</span> Move money or withdraw funds</li>
+      </ul>
 
-      <div class="mt-5 flex flex-wrap items-center gap-3">
-        <button id="run" class="btn-primary px-5 py-2">Run X-Ray</button>
-        <label class="text-sm muted flex items-center gap-2">
-          <input type="checkbox" id="explain"/> Explain in plain language (Groq)
-        </label>
-        <span id="status" class="text-sm muted"></span>
-      </div>
-    </div>
-
-    <!-- CAS upload -->
-    <div id="entryCas" class="card p-5 mb-6 hidden">
-      <p class="text-sm muted mb-1">Upload your CAMS or KFintech Consolidated Account Statement (PDF).</p>
-      <p class="text-xs muted mb-4">
-        Parsed in memory and never written to disk. PAN, email and folio numbers are redacted before parsing —
-        only scheme names and values leave the upload.
+      <p class="text-xs muted mt-5 leading-relaxed">
+        Your session lives on the server only and ends at midnight IST, or when you sign out.
+        Your browser holds nothing but an opaque session id. The API key you enter above
+        travels once, with this login attempt only — it isn't stored anywhere after your
+        session ends.
       </p>
-      <form id="casForm" class="flex flex-wrap items-end gap-3">
-        <div>
-          <label class="block text-xs muted mb-1">CAS file (PDF)</label>
-          <input type="text" id="casFileLabel" class="hidden"/>
-          <input type="file" id="casFile" accept="application/pdf" required
-                 class="text-sm file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:bg-[#1e2936] file:text-[#e6edf3] file:text-sm hover:file:bg-[#26333f]"/>
-        </div>
-        <div>
-          <label class="block text-xs muted mb-1">Password (if protected)</label>
-          <input type="password" id="casPassword" placeholder="optional" class="px-2 py-2 text-sm w-40"/>
-        </div>
-        <button type="submit" class="btn-primary px-5 py-2">Parse statement</button>
-        <span id="casStatus" class="text-sm muted"></span>
-      </form>
-      <div id="casResult" class="mt-5 hidden">
-        <div class="flex items-center justify-between mb-2">
-          <h4 class="font-semibold text-sm">Holdings found</h4>
-          <span id="casTotal" class="text-sm muted"></span>
-        </div>
-        <div id="casTable" class="text-sm"></div>
-        <p class="text-xs muted mt-3">
-          These are read from your statement directly. FundXRay's scheme-matching for the X-Ray tool above
-          currently works from AMFI scheme codes, not CAS scheme names — so amounts aren't auto-filled into
-          the calculator yet. Use these figures to fill the fields above by hand for now.
-        </p>
-      </div>
     </div>
+  </div>
 
-    <!-- results -->
-    <div id="results" class="hidden">
-      <section class="grid md:grid-cols-4 gap-4 mb-6">
-        <div class="card p-4"><div class="text-xs muted">TRUE TOP HOLDING</div><div id="k1" class="text-xl font-bold mt-1"></div><div id="k1s" class="text-sm muted"></div></div>
-        <div class="card p-4"><div class="text-xs muted">TOP 10 CONCENTRATION</div><div id="k2" class="text-xl font-bold mt-1"></div><div class="text-sm muted">of your portfolio</div></div>
-        <div class="card p-4"><div class="text-xs muted">UNIQUE COMPANIES</div><div id="k3" class="text-xl font-bold mt-1"></div><div id="k3s" class="text-sm muted"></div></div>
-        <div class="card p-4"><div class="text-xs muted">ANNUAL FEE</div><div id="k4" class="text-xl font-bold mt-1"></div><div id="k4s" class="text-sm muted"></div></div>
-      </section>
-
-      <section class="grid md:grid-cols-2 gap-4 mb-6">
-        <div class="card p-5"><h3 class="font-semibold mb-3">Look-through holdings</h3><canvas id="chartHoldings" height="260"></canvas></div>
-        <div class="card p-5"><h3 class="font-semibold mb-3">Sector exposure</h3><canvas id="chartSectors" height="260"></canvas></div>
-      </section>
-
-      <section class="card p-5 mb-6">
-        <h3 class="font-semibold mb-1">Fund overlap</h3>
-        <p class="text-sm muted mb-3">Under 30% healthy · 30–50% monitor · above 50% the second fund adds limited diversification</p>
-        <div id="overlaps" class="space-y-2"></div>
-      </section>
-
-      <section id="narrativeBox" class="card p-5 mb-6 hidden">
-        <h3 class="font-semibold mb-2">In plain language</h3>
-        <div id="narrative" class="text-sm leading-relaxed whitespace-pre-wrap muted"></div>
-      </section>
-
-      <p id="asof" class="text-xs muted"></p>
-    </div>
-  </section>
-
-  <!-- ============ FUND HEALTH (active share) ============ -->
-  <section id="health" class="mt-14">
-    <h2 class="text-xl font-bold mb-1">Fund health — active share</h2>
-    <p class="text-sm muted mb-4">
-      How much of each fund actually differs from its benchmark. Low active share paired with an active-fund
-      fee is what's sometimes called <em>closet indexing</em> — paying active-management fees for index-like exposure.
-      This is a description of what the numbers show, not a recommendation.
+  <div class="card p-5 mt-4">
+    <h3 class="text-sm font-semibold mb-1">No Angel One account?</h3>
+    <p class="text-sm muted">
+      You can still analyse your mutual funds &mdash;
+      <a href="/" class="text-emerald-400 hover:underline">enter schemes manually or upload a CAS</a>.
     </p>
-    <div class="card p-5">
-      <div id="activeShareTable" class="text-sm overflow-x-auto">
-        <div class="skeleton h-32 rounded-lg"></div>
-      </div>
-    </div>
-  </section>
+  </div>
 
-  <!-- ============ STYLE DRIFT ============ -->
-  <section id="drift" class="mt-14">
-    <h2 class="text-xl font-bold mb-1">Style drift</h2>
-    <p class="text-sm muted mb-4">
-      Cap-size composition of a scheme, month by month, against AMFI's official large/mid/small classification.
-      A flexi-cap fund creeping toward 95% large-cap is drift worth knowing about.
-    </p>
-    <div class="card p-5">
-      <div class="flex flex-wrap items-center gap-3 mb-4">
-        <label class="text-sm muted">Scheme</label>
-        <select id="driftScheme" class="px-2 py-1.5 text-sm min-w-[220px]"></select>
-        <span id="driftStatus" class="text-sm muted"></span>
-      </div>
-      <canvas id="chartDrift" height="220"></canvas>
-    </div>
-  </section>
-
-  <!-- ============ TURNOVER ============ -->
-  <section id="turnover" class="mt-14">
-    <h2 class="text-xl font-bold mb-1">Inferred turnover</h2>
-    <p class="text-sm muted mb-4">
-      Approximated portfolio churn from month-over-month holdings changes. A lower bound only — intra-month
-      round trips and price drift both hide from monthly disclosure.
-    </p>
-    <div class="card p-5">
-      <div class="flex flex-wrap items-center gap-3 mb-4">
-        <label class="text-sm muted">Scheme</label>
-        <select id="turnoverScheme" class="px-2 py-1.5 text-sm min-w-[220px]"></select>
-        <span id="turnoverStatus" class="text-sm muted"></span>
-      </div>
-      <canvas id="chartTurnover" height="200"></canvas>
-    </div>
-  </section>
-
-  <!-- ============ LIQUIDITY / CROWDING / DTL ============ -->
-  <section id="liquidity" class="mt-14">
-    <div class="flex items-center justify-between mb-1 flex-wrap gap-2">
-      <h2 class="text-xl font-bold">Industry crowding &amp; liquidity</h2>
-      <div class="flex gap-1 text-sm">
-        <button class="tab-btn active" data-tab="dtl" onclick="switchLiquidityTab('dtl')">Days to liquidate</button>
-        <button class="tab-btn" data-tab="crowd" onclick="switchLiquidityTab('crowd')">By rupee holding</button>
-      </div>
-    </div>
-    <p class="text-sm muted mb-4">
-      Sessions the mutual fund industry would need to exit a stock at 20% of average daily volume. A relative
-      ranking of crowding, not a forecast of exit time.
-    </p>
-    <div class="card p-5">
-      <div id="dtlView"><div id="dtl" class="text-sm"></div></div>
-      <div id="crowdView" class="hidden"><div id="crowd" class="text-sm"></div></div>
-    </div>
-  </section>
-
-  <!-- ============ FEE CALCULATOR ============ -->
-  <section id="fees" class="mt-14">
-    <h2 class="text-xl font-bold mb-1">Fee drag calculator</h2>
-    <p class="text-sm muted mb-4">
-      Terminal-value difference between two expense ratios, under a stated return assumption. An illustration,
-      never a prediction — change the assumption and watch the gap move.
-    </p>
-    <div class="card p-5">
-      <form id="feeForm" class="grid sm:grid-cols-2 lg:grid-cols-5 gap-3 items-end">
-        <div>
-          <label class="block text-xs muted mb-1">Monthly SIP (₹)</label>
-          <input type="number" id="feeMonthly" value="10000" min="0" step="500" class="w-full px-2 py-1.5 text-sm"/>
-        </div>
-        <div>
-          <label class="block text-xs muted mb-1">Years</label>
-          <input type="number" id="feeYears" value="20" min="1" max="50" class="w-full px-2 py-1.5 text-sm"/>
-        </div>
-        <div>
-          <label class="block text-xs muted mb-1">Gross return assumption (%)</label>
-          <input type="number" id="feeReturn" value="12" min="0" max="30" step="0.5" class="w-full px-2 py-1.5 text-sm"/>
-        </div>
-        <div>
-          <label class="block text-xs muted mb-1">Regular plan TER (%)</label>
-          <input type="number" id="feeTerA" value="1.5" min="0" max="5" step="0.05" class="w-full px-2 py-1.5 text-sm"/>
-        </div>
-        <div>
-          <label class="block text-xs muted mb-1">Direct plan TER (%)</label>
-          <input type="number" id="feeTerB" value="0.5" min="0" max="5" step="0.05" class="w-full px-2 py-1.5 text-sm"/>
-        </div>
-        <button type="submit" class="btn-primary px-5 py-2 sm:col-span-2 lg:col-span-1">Calculate</button>
-      </form>
-
-      <div id="feeResult" class="hidden mt-6">
-        <div class="grid sm:grid-cols-3 gap-4 mb-5">
-          <div class="rounded-lg p-4" style="background:var(--line-soft)">
-            <div class="text-xs muted">TOTAL INVESTED</div>
-            <div id="feeInvested" class="text-lg font-bold mt-1"></div>
-          </div>
-          <div class="rounded-lg p-4" style="background:var(--line-soft)">
-            <div class="text-xs muted">TERMINAL VALUE — REGULAR</div>
-            <div id="feeValA" class="text-lg font-bold mt-1"></div>
-          </div>
-          <div class="rounded-lg p-4" style="background:var(--line-soft)">
-            <div class="text-xs muted">TERMINAL VALUE — DIRECT</div>
-            <div id="feeValB" class="text-lg font-bold mt-1"></div>
-          </div>
-        </div>
-        <p class="text-sm">
-          Fee drag over the horizon: <span id="feeDiff" class="font-semibold text-[color:var(--accent)]"></span>
-        </p>
-        <canvas id="chartFee" height="90" class="mt-4"></canvas>
-        <p class="text-xs muted mt-3" id="feeNote"></p>
-      </div>
-    </div>
-  </section>
-
-  <!-- ============ DATA QUALITY ============ -->
-  <section id="quality" class="mt-14 mb-4">
-    <h2 class="text-xl font-bold mb-1">Data quality</h2>
-    <p class="text-sm muted mb-4">
-      The gates every disclosure passes through before it reaches this page. A metric that fails quarantines
-      the affected data — it never silently propagates into what you see above.
-    </p>
-    <div class="card p-5">
-      <div id="qualityGrid" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-        <div class="skeleton h-16 rounded-lg"></div>
-        <div class="skeleton h-16 rounded-lg"></div>
-        <div class="skeleton h-16 rounded-lg"></div>
-      </div>
-    </div>
-  </section>
-
-  <footer class="text-xs muted mt-14 pt-6 border-t leading-relaxed" style="border-color:var(--line)">
-    FundXRay is an informational tool built on public regulatory disclosures. It does not rank, recommend,
-    or assess the suitability of any scheme. Investment advice in India is regulated by SEBI.
-    Mutual fund investments are subject to market risks; read all scheme related documents carefully.
-    Not affiliated with AMFI, SEBI, Angel One, or any asset management company.
-  </footer>
+  <p class="text-xs muted mt-8 text-center leading-relaxed">
+    FundXRay is an informational tool built on public SEBI-mandated disclosures.
+    Not investment advice. Not affiliated with Angel One, AMFI or SEBI.
+  </p>
 </div>
 
 <script>
-const fmt = n => "₹" + Number(n||0).toLocaleString("en-IN", {maximumFractionDigits:0});
-const pct = n => Number(n||0).toFixed(2) + "%";
-let schemes = [], chartH, chartS, chartDrift, chartTurnover, chartFee;
-
-/* ---------------- scroll-spy nav ---------------- */
-function initNavSpy(){
-  const links = [...document.querySelectorAll("#mainNav a")];
-  const targets = links.map(a => document.querySelector(a.getAttribute("href"))).filter(Boolean);
-  const io = new IntersectionObserver((entries)=>{
-    entries.forEach(e=>{
-      if(e.isIntersecting){
-        const id = "#" + e.target.id;
-        links.forEach(a => a.classList.toggle("active", a.getAttribute("href") === id));
-      }
-    });
-  }, {rootMargin: "-40% 0px -55% 0px"});
-  targets.forEach(t => io.observe(t));
-}
-
-/* ---------------- entry tabs (manual vs CAS) ---------------- */
-function switchEntryTab(which){
-  document.getElementById("entryManual").classList.toggle("hidden", which !== "manual");
-  document.getElementById("entryCas").classList.toggle("hidden", which !== "cas");
-  document.querySelectorAll('[data-tab="manual"],[data-tab="cas"]').forEach(b=>{
-    b.classList.toggle("active", b.dataset.tab === which);
-  });
-}
-
-function switchLiquidityTab(which){
-  document.getElementById("dtlView").classList.toggle("hidden", which !== "dtl");
-  document.getElementById("crowdView").classList.toggle("hidden", which !== "crowd");
-  document.querySelectorAll('[data-tab="dtl"],[data-tab="crowd"]').forEach(b=>{
-    b.classList.toggle("active", b.dataset.tab === which);
-  });
-  if(which === "crowd") loadCrowding();
-}
-
-/* ---------------- fund search & add ---------------- */
-const selectedFunds = new Map(); // scheme_code -> scheme object
-
-function schemeByCode(code){ return schemes.find(s => s.scheme_code === code); }
-
-function renderFundRows(){
-  const wrap = document.getElementById("fundRows");
-  const empty = document.getElementById("fundRowsEmpty");
-  if(!selectedFunds.size){
-    wrap.innerHTML = "";
-    wrap.appendChild(empty);
-    empty.classList.remove("hidden");
-    return;
+// If this deployment has its own default SmartAPI key configured, /health
+// reports smartapi_configured: true — surface that so visitors know leaving
+// the field blank is a valid choice, not an error.
+fetch("/health").then(r => r.json()).then(d => {
+  if (d.smartapi_configured) {
+    document.getElementById("defaultKeyNote").classList.remove("hidden");
   }
-  wrap.innerHTML = "";
-  selectedFunds.forEach((s, code) => {
-    const row = document.createElement("div");
-    row.className = "flex items-center gap-3";
-    row.innerHTML = `
-      <div class="flex-1 min-w-0">
-        <div class="text-sm truncate">${s.scheme_name}</div>
-        <div class="text-xs muted">${s.category} · TER ${s.ter_regular_pct}%</div>
-      </div>
-      <input type="number" min="0" step="1000" placeholder="0" data-code="${code}"
-             class="w-32 px-2 py-1.5 rounded-md text-sm" aria-label="Amount in ${s.scheme_name}"/>
-      <button type="button" data-remove="${code}"
-              class="text-lg leading-none w-7 h-7 rounded-md hover:bg-[#1e2936] transition muted"
-              aria-label="Remove ${s.scheme_name}">×</button>`;
-    wrap.appendChild(row);
-  });
-  wrap.querySelectorAll("[data-remove]").forEach(btn => {
-    btn.onclick = () => { selectedFunds.delete(btn.dataset.remove); renderFundRows(); };
-  });
-}
-
-function addFund(code){
-  if(selectedFunds.has(code)){
-    // already added — just focus its amount field instead of duplicating
-    const el = document.querySelector(`input[data-code="${code}"]`);
-    el?.focus();
-    return;
-  }
-  const s = schemeByCode(code);
-  if(!s) return;
-  selectedFunds.set(code, s);
-  renderFundRows();
-  requestAnimationFrame(() => document.querySelector(`input[data-code="${code}"]`)?.focus());
-}
-
-function renderSuggestions(query){
-  const box = document.getElementById("fundSuggestions");
-  const search = document.getElementById("fundSearch");
-  const q = query.trim().toLowerCase();
-  if(!q){ box.classList.add("hidden"); search.setAttribute("aria-expanded","false"); return; }
-
-  const matches = schemes.filter(s => s.scheme_name.toLowerCase().includes(q)
-                                     || (s.category||"").toLowerCase().includes(q)).slice(0, 8);
-  if(!matches.length){
-    box.innerHTML = `<div class="px-3 py-3 text-sm muted">No schemes match "${query}".</div>`;
-    box.classList.remove("hidden");
-    search.setAttribute("aria-expanded","true");
-    return;
-  }
-  box.innerHTML = matches.map(s => `
-    <button type="button" data-pick="${s.scheme_code}" role="option"
-            class="w-full text-left px-3 py-2.5 text-sm hover:bg-[#1e2936] transition flex items-center justify-between gap-2 ${selectedFunds.has(s.scheme_code) ? 'opacity-50' : ''}">
-      <span class="truncate">${s.scheme_name}</span>
-      <span class="text-xs muted shrink-0">${s.category}${selectedFunds.has(s.scheme_code) ? ' · added' : ''}</span>
-    </button>`).join("");
-  box.classList.remove("hidden");
-  search.setAttribute("aria-expanded","true");
-  box.querySelectorAll("[data-pick]").forEach(btn => {
-    btn.onclick = () => {
-      addFund(btn.dataset.pick);
-      search.value = "";
-      box.classList.add("hidden");
-      search.setAttribute("aria-expanded","false");
-      search.focus();
-    };
-  });
-}
-
-function initFundSearch(){
-  const search = document.getElementById("fundSearch");
-  const box = document.getElementById("fundSuggestions");
-  search.addEventListener("input", () => renderSuggestions(search.value));
-  search.addEventListener("focus", () => { if(search.value.trim()) renderSuggestions(search.value); });
-  search.addEventListener("keydown", (e) => {
-    if(e.key === "Enter"){
-      e.preventDefault();
-      const first = box.querySelector("[data-pick]");
-      if(first) first.click();
-    } else if(e.key === "Escape"){
-      box.classList.add("hidden");
-      search.setAttribute("aria-expanded","false");
-    }
-  });
-  document.addEventListener("click", (e) => {
-    if(!box.contains(e.target) && e.target !== search){
-      box.classList.add("hidden");
-      search.setAttribute("aria-expanded","false");
-    }
-  });
-}
-
-/* ---------------- init ---------------- */
-async function init(){
-  initNavSpy();
-  initFundSearch();
-  try{
-    schemes = await (await fetch("/api/schemes")).json();
-  }catch(e){ schemes = []; }
-
-  if(!Array.isArray(schemes) || !schemes.length){
-    document.getElementById("fundSearch").disabled = true;
-    document.getElementById("fundSearch").placeholder = "No scheme data available — try reloading in a moment";
-    document.getElementById("fundRowsEmpty").textContent =
-      "No scheme data available right now. The serving artifact may still be building.";
-    return;
-  }
-
-  const schemeOptions = schemes.map(s => `<option value="${s.scheme_code}">${s.scheme_name}</option>`).join("");
-  document.getElementById("driftScheme").innerHTML = schemeOptions;
-  document.getElementById("turnoverScheme").innerHTML = schemeOptions;
-
-  loadDtl();
-  loadActiveShare();
-  loadQuality();
-  if(schemes.length){
-    loadDrift(schemes[0].scheme_code);
-    loadTurnover(schemes[0].scheme_code);
-  }
-}
-
-/* ---------------- X-Ray ---------------- */
-document.getElementById("run").onclick = async () => {
-  const holdings = {};
-  document.querySelectorAll("input[data-code]").forEach(i => {
-    const v = parseFloat(i.value); if (v > 0) holdings[i.dataset.code] = v;
-  });
-  const st = document.getElementById("status");
-  if (!Object.keys(holdings).length){ st.textContent = "Add a fund and enter an amount first."; return; }
-  st.textContent = "Analysing…";
-
-  try{
-    const res = await fetch("/api/xray", {
-      method:"POST", headers:{"Content-Type":"application/json"},
-      body: JSON.stringify({holdings, explain: document.getElementById("explain").checked})
-    });
-    if (!res.ok){ st.textContent = "Error: " + (await res.text()); return; }
-    const d = await res.json();
-    st.textContent = "";
-    renderXray(d);
-  }catch(e){ st.textContent = "Could not reach the server."; }
-};
-
-function renderXray(d){
-  document.getElementById("results").classList.remove("hidden");
-  document.getElementById("k1").textContent = d.summary.top_holding ?? "—";
-  document.getElementById("k1s").textContent = d.summary.top_holding_pct + "% of your portfolio";
-  document.getElementById("k2").textContent = d.summary.top_10_pct + "%";
-  document.getElementById("k3").textContent = d.summary.unique_companies;
-  document.getElementById("k3s").textContent = "across " + d.fund_count + " funds";
-  document.getElementById("k4").textContent = fmt(d.annual_fee_regular);
-  document.getElementById("k4s").textContent =
-    "direct plan: " + fmt(d.annual_fee_direct) + " (" + fmt(d.annual_fee_regular - d.annual_fee_direct) + "/yr less)";
-
-  const H = d.top_holdings.slice(0,12);
-  chartH?.destroy();
-  chartH = new Chart(document.getElementById("chartHoldings"), {
-    type:"bar",
-    data:{labels:H.map(h=>h.instrument_name_raw),
-          datasets:[{data:H.map(h=>h.weight_pct), backgroundColor:"#34d399"}]},
-    options:{indexAxis:"y", plugins:{legend:{display:false}},
-             scales:{x:{ticks:{color:"#8b9bb0"},grid:{color:"#1e2936"}},
-                     y:{ticks:{color:"#e6edf3",font:{size:10}},grid:{display:false}}}}
-  });
-
-  chartS?.destroy();
-  chartS = new Chart(document.getElementById("chartSectors"), {
-    type:"doughnut",
-    data:{labels:d.sectors.map(s=>s.sector),
-          datasets:[{data:d.sectors.map(s=>s.weight_pct),
-                     backgroundColor:["#34d399","#60a5fa","#f472b6","#fbbf24","#a78bfa","#f87171","#22d3ee","#4ade80","#fb923c"]}]},
-    options:{plugins:{legend:{position:"right",labels:{color:"#8b9bb0",font:{size:11}}}}}
-  });
-
-  document.getElementById("overlaps").innerHTML = d.overlaps.length ? d.overlaps.map(o=>{
-    const c = o.overlap_pct>50?"bg-red-400":o.overlap_pct>30?"bg-amber-400":"bg-emerald-400";
-    return `<div>
-      <div class="flex justify-between text-sm"><span>${o.scheme_a_name} ↔ ${o.scheme_b_name}</span>
-      <span class="font-semibold">${o.overlap_pct}%</span></div>
-      <div class="h-1.5 bg-[#1e2936] rounded mt-1"><div class="${c} h-1.5 rounded" style="width:${Math.min(o.overlap_pct,100)}%"></div></div>
-    </div>`;}).join("") : `<p class="text-sm muted">Add two or more funds to see overlap.</p>`;
-
-  if (d.narrative){
-    document.getElementById("narrativeBox").classList.remove("hidden");
-    document.getElementById("narrative").textContent = d.narrative;
-  } else {
-    document.getElementById("narrativeBox").classList.add("hidden");
-  }
-  document.getElementById("asof").textContent =
-    "Holdings as of " + d.as_of + ". " + d.disclaimer;
-  document.getElementById("results").scrollIntoView({behavior:"smooth"});
-}
-
-/* ---------------- CAS upload ---------------- */
-document.getElementById("casForm").addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const fileInput = document.getElementById("casFile");
-  const st = document.getElementById("casStatus");
-  if(!fileInput.files.length){ st.textContent = "Choose a PDF first."; return; }
-  st.textContent = "Parsing…";
-
-  const fd = new FormData();
-  fd.append("file", fileInput.files[0]);
-  const pw = document.getElementById("casPassword").value;
-  if(pw) fd.append("password", pw);
-
-  try{
-    const res = await fetch("/api/cas", {method:"POST", body: fd});
-    const d = await res.json();
-    if(!res.ok){ st.textContent = "Error: " + (d.detail || "could not parse statement"); return; }
-    st.textContent = "";
-    renderCas(d);
-  }catch(err){ st.textContent = "Could not reach the server."; }
-});
-
-function renderCas(d){
-  const box = document.getElementById("casResult");
-  box.classList.remove("hidden");
-  document.getElementById("casTotal").textContent = "Total: " + fmt(d.total_value);
-  const rows = d.holdings || [];
-  document.getElementById("casTable").innerHTML = rows.length ? `
-    <table class="w-full text-left">
-      <thead class="muted text-xs"><tr><th class="py-1">Scheme</th><th>ISIN</th><th class="text-right">Value</th></tr></thead>
-      <tbody>${rows.map(h=>`<tr class="border-t" style="border-color:var(--line)">
-        <td class="py-1.5">${h.scheme_name}</td>
-        <td class="muted text-xs">${h.isin}</td>
-        <td class="text-right">${fmt(h.value)}</td>
-      </tr>`).join("")}</tbody>
-    </table>` : `<p class="text-sm muted">${(d.warnings||[]).join(" ") || "No holdings recognised in this statement."}</p>`;
-}
-
-/* ---------------- Active share / fund health ---------------- */
-async function loadActiveShare(){
-  const el = document.getElementById("activeShareTable");
-  try{
-    const rows = await (await fetch("/api/active-share")).json();
-    if(!rows.length){ el.innerHTML = `<p class="text-sm muted">No active-share data available.</p>`; return; }
-    el.innerHTML = `
-      <table class="w-full text-left">
-        <thead class="muted text-xs"><tr>
-          <th class="py-1">Scheme</th><th>Category</th><th>Benchmark</th>
-          <th class="text-right">Active share</th><th class="text-right">TER (regular)</th><th class="text-right">TER (direct)</th><th></th>
-        </tr></thead>
-        <tbody>${rows.map(r=>`<tr class="border-t" style="border-color:var(--line)">
-          <td class="py-2">${r.scheme_name}</td>
-          <td class="muted">${r.category}</td>
-          <td class="muted">${r.benchmark}</td>
-          <td class="text-right font-semibold">${pct(r.active_share_pct)}</td>
-          <td class="text-right muted">${r.ter_regular_pct}%</td>
-          <td class="text-right muted">${r.ter_direct_pct}%</td>
-          <td class="text-right">${r.closet_index_flag ? '<span class="badge badge-fail">low active share</span>' : ''}</td>
-        </tr>`).join("")}</tbody>
-      </table>`;
-  }catch(e){ el.innerHTML = `<p class="text-sm muted">Could not load active-share data.</p>`; }
-}
-
-/* ---------------- Style drift ---------------- */
-document.getElementById("driftScheme").addEventListener("change", (e)=> loadDrift(e.target.value));
-
-async function loadDrift(code){
-  const st = document.getElementById("driftStatus");
-  st.textContent = "Loading…";
-  try{
-    const res = await fetch(`/api/drift/${code}`);
-    const rows = await res.json();
-    if(!res.ok || !Array.isArray(rows)){
-      st.textContent = (rows && rows.detail) || "No drift series for this scheme yet.";
-      chartDrift?.destroy();
-      return;
-    }
-    st.textContent = "";
-    chartDrift?.destroy();
-    chartDrift = new Chart(document.getElementById("chartDrift"), {
-      type:"bar",
-      data:{
-        labels: rows.map(r=>r.disclosure_month),
-        datasets:[
-          {label:"Large", data: rows.map(r=>r.large), backgroundColor:"#34d399", stack:"cap"},
-          {label:"Mid", data: rows.map(r=>r.mid), backgroundColor:"#60a5fa", stack:"cap"},
-          {label:"Small", data: rows.map(r=>r.small), backgroundColor:"#fbbf24", stack:"cap"},
-        ]
-      },
-      options:{
-        plugins:{legend:{labels:{color:"#8b9bb0"}}},
-        scales:{
-          x:{stacked:true, ticks:{color:"#8b9bb0", maxRotation:0}, grid:{display:false}},
-          y:{stacked:true, max:100, ticks:{color:"#8b9bb0"}, grid:{color:"#1e2936"}}
-        }
-      }
-    });
-  }catch(e){ st.textContent = "No drift series for this scheme yet."; chartDrift?.destroy(); }
-}
-
-/* ---------------- Turnover ---------------- */
-document.getElementById("turnoverScheme").addEventListener("change", (e)=> loadTurnover(e.target.value));
-
-async function loadTurnover(code){
-  const st = document.getElementById("turnoverStatus");
-  st.textContent = "Loading…";
-  try{
-    const res = await fetch(`/api/turnover/${code}`);
-    const d = await res.json();
-    if(!res.ok){ st.textContent = d.detail || "No turnover series for this scheme yet."; chartTurnover?.destroy(); return; }
-    st.textContent = d.caveat || "";
-    chartTurnover?.destroy();
-    chartTurnover = new Chart(document.getElementById("chartTurnover"), {
-      type:"line",
-      data:{
-        labels: d.rows.map(r=>r.disclosure_month),
-        datasets:[{label:"Inferred turnover %", data: d.rows.map(r=>r.inferred_turnover_pct),
-                   borderColor:"#34d399", backgroundColor:"rgba(52,211,153,.15)", fill:true, tension:.25}]
-      },
-      options:{
-        plugins:{legend:{display:false}},
-        scales:{x:{ticks:{color:"#8b9bb0", maxRotation:0}, grid:{display:false}},
-                y:{ticks:{color:"#8b9bb0"}, grid:{color:"#1e2936"}}}
-      }
-    });
-  }catch(e){ st.textContent = "Could not load turnover."; }
-}
-
-/* ---------------- DTL / crowding ---------------- */
-async function loadDtl(){
-  try{
-    const d = await (await fetch("/api/dtl?limit=15")).json();
-    document.getElementById("dtl").innerHTML = `
-      <table class="w-full text-left">
-        <thead class="muted text-xs"><tr>
-          <th class="py-1">Company</th><th>Cap</th><th class="text-right">MF holding</th>
-          <th class="text-right">% free float</th><th class="text-right">Days to exit</th></tr></thead>
-        <tbody>${d.rows.map(r=>`<tr class="border-t" style="border-color:var(--line)">
-          <td class="py-1.5">${r.company_name}</td>
-          <td class="muted">${r.cap_bucket}</td>
-          <td class="text-right">₹${Number(r.mf_holding_cr).toLocaleString("en-IN")} cr</td>
-          <td class="text-right">${r.mf_pct_of_free_float}%</td>
-          <td class="text-right font-semibold ${r.days_to_liquidate>15?'text-red-400':r.days_to_liquidate>5?'text-amber-400':'text-emerald-400'}">${r.days_to_liquidate}</td>
-        </tr>`).join("")}</tbody></table>`;
-  }catch(e){ document.getElementById("dtl").innerHTML = `<p class="text-sm muted">Could not load liquidity data.</p>`; }
-}
-
-async function loadCrowding(){
-  const el = document.getElementById("crowd");
-  if(el.dataset.loaded) return;
-  try{
-    const rows = await (await fetch("/api/crowding?limit=15")).json();
-    el.innerHTML = `
-      <table class="w-full text-left">
-        <thead class="muted text-xs"><tr>
-          <th class="py-1">Company</th><th>Cap</th><th class="text-right">MF holding (₹cr)</th>
-        </tr></thead>
-        <tbody>${rows.map(r=>`<tr class="border-t" style="border-color:var(--line)">
-          <td class="py-1.5">${r.company_name}</td>
-          <td class="muted">${r.cap_bucket}</td>
-          <td class="text-right font-semibold">₹${Number(r.mf_holding_cr).toLocaleString("en-IN")} cr</td>
-        </tr>`).join("")}</tbody></table>`;
-    el.dataset.loaded = "1";
-  }catch(e){ el.innerHTML = `<p class="text-sm muted">Could not load crowding data.</p>`; }
-}
-
-/* ---------------- Fee calculator ---------------- */
-document.getElementById("feeForm").addEventListener("submit", async (e)=>{
-  e.preventDefault();
-  const body = {
-    monthly_contribution: parseFloat(document.getElementById("feeMonthly").value) || 0,
-    years: parseInt(document.getElementById("feeYears").value) || 1,
-    gross_return_pct: parseFloat(document.getElementById("feeReturn").value) || 0,
-    ter_a_pct: parseFloat(document.getElementById("feeTerA").value) || 0,
-    ter_b_pct: parseFloat(document.getElementById("feeTerB").value) || 0,
-  };
-  try{
-    const res = await fetch("/api/fee-drag", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify(body)});
-    const d = await res.json();
-    if(!res.ok) return;
-    document.getElementById("feeResult").classList.remove("hidden");
-    document.getElementById("feeInvested").textContent = fmt(d.invested);
-    document.getElementById("feeValA").textContent = fmt(d.terminal_value_a);
-    document.getElementById("feeValB").textContent = fmt(d.terminal_value_b);
-    document.getElementById("feeDiff").textContent = fmt(d.difference) + " more with the direct plan";
-    document.getElementById("feeNote").textContent = d.note + ` Assumes ${d.gross_return_assumption_pct}% gross return over ${d.years} years.`;
-
-    chartFee?.destroy();
-    chartFee = new Chart(document.getElementById("chartFee"), {
-      type:"bar",
-      data:{labels:["Invested", `Regular (${d.ter_a_pct}% TER)`, `Direct (${d.ter_b_pct}% TER)`],
-            datasets:[{data:[d.invested, d.terminal_value_a, d.terminal_value_b],
-                       backgroundColor:["#60a5fa","#f87171","#34d399"]}]},
-      options:{indexAxis:"y", plugins:{legend:{display:false}},
-               scales:{x:{ticks:{color:"#8b9bb0"},grid:{color:"#1e2936"}},
-                       y:{ticks:{color:"#e6edf3"},grid:{display:false}}}}
-    });
-  }catch(err){ /* silent */ }
-});
-
-/* ---------------- Data quality ---------------- */
-async function loadQuality(){
-  const el = document.getElementById("qualityGrid");
-  try{
-    const rows = await (await fetch("/api/quality")).json();
-    if(!rows.length){ el.innerHTML = `<p class="text-sm muted col-span-full">No quality report available.</p>`; return; }
-    el.innerHTML = rows.map(r=>`
-      <div class="rounded-lg p-4" style="background:var(--line-soft)">
-        <div class="flex items-center justify-between mb-1">
-          <span class="text-xs muted">${r.metric.replace(/_/g," ")}</span>
-          <span class="badge ${r.passed ? 'badge-pass' : 'badge-fail'}">${r.passed ? "pass" : "fail"}</span>
-        </div>
-        <div class="text-lg font-semibold">${r.value}</div>
-        <div class="text-xs muted">threshold: ${r.threshold}</div>
-      </div>`).join("");
-  }catch(e){ el.innerHTML = `<p class="text-sm muted col-span-full">Could not load quality report.</p>`; }
-}
-
-init();
+}).catch(() => {});
 </script>
 </body>
 </html>
