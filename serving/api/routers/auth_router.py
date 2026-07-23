@@ -25,17 +25,30 @@ def _require_session(cookie_value: str | None) -> auth.Session:
 
 
 @router.get("/login")
-def login(request: Request):
+def login(request: Request, api_key: str = ""):
     """Redirect to Angel One's own login page.
 
     The user authenticates on angelone.in. This server never sees their client
     code, PIN or TOTP.
+
+    `api_key` is optional and comes from the visitor's own input on the login
+    page (bring-your-own SmartAPI app key). If omitted, this server's own
+    SMARTAPI_API_KEY is used instead — so a shared/demo deployment still works
+    with no visitor input required, as long as the operator configured a key.
     """
-    if not settings.smartapi_api_key:
-        raise HTTPException(503, "SMARTAPI_API_KEY not configured on the server.")
+    key = api_key.strip()
+    if not key and not settings.smartapi_api_key:
+        raise HTTPException(
+            503,
+            "This server has no default SmartAPI key configured, and none was "
+            "supplied. Enter your own SmartAPI app key on the sign-in page — "
+            "register one free at https://smartapi.angelone.in/."
+        )
     redirect_url = str(request.url_for("auth_callback"))
-    state = auth.store.issue_state()
-    return RedirectResponse(auth.login_url(redirect_url, state), status_code=302)
+    # The chosen key travels with the CSRF nonce, not a cookie, so it can't be
+    # tampered with client-side between here and the callback.
+    state = auth.store.issue_state(api_key=key)
+    return RedirectResponse(auth.login_url(redirect_url, state, api_key=key), status_code=302)
 
 
 @router.get("/auth/callback", name="auth_callback")
@@ -44,11 +57,15 @@ def auth_callback(request: Request, response: Response, auth_token: str = "",
     """Angel One redirects here with short-lived tokens."""
     if not auth_token:
         raise HTTPException(400, "Angel One did not return an auth token.")
-    if not auth.store.consume_state(state):
-        # Single-use nonce: blocks CSRF and replayed callback URLs.
+
+    # Single-use nonce: blocks CSRF and replayed callback URLs. Also recovers
+    # whichever api_key this particular login was started with.
+    used_api_key = auth.store.consume_state(state)
+    if used_api_key is None:
         raise HTTPException(400, "Invalid or expired login state. Please start again.")
 
-    session = auth.store.create(auth_token, feed_token, refresh_token)
+    effective_key = used_api_key or settings.smartapi_api_key
+    session = auth.store.create(auth_token, feed_token, refresh_token, api_key=effective_key)
     redirect = RedirectResponse("/dashboard", status_code=302)
     # Secure is set whenever we are actually on HTTPS. Deriving it from the
     # request scheme keeps production strict without breaking local http.
@@ -76,16 +93,18 @@ def session_info(fx_session: str | None = Cookie(default=None)):
     if s is None:
         return {"signed_in": False}
     return {"signed_in": True, "expires_at": s.expires_at.isoformat(),
-            "client_code": s.client_code or None}
+            "client_code": s.client_code or None,
+            "using_own_api_key": bool(s.api_key and s.api_key != settings.smartapi_api_key)}
 
 
 @router.get("/api/me/holdings")
 def my_holdings(fx_session: str | None = Cookie(default=None)):
     """The signed-in user's own demat holdings, analysed."""
     session = _require_session(fx_session)
+    api_key = session.api_key or settings.smartapi_api_key
     try:
-        holdings = portfolio.fetch_holdings(session.auth_token)
-        totals = portfolio.fetch_totals(session.auth_token)
+        holdings = portfolio.fetch_holdings(session.auth_token, api_key)
+        totals = portfolio.fetch_totals(session.auth_token, api_key)
     except Exception as e:
         log.warning("SmartAPI holdings fetch failed: %s", e)
         raise HTTPException(502, f"Could not reach Angel One: {e}")
