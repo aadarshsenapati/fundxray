@@ -4,7 +4,6 @@ from __future__ import annotations
 from fastapi import APIRouter, Cookie, HTTPException, Request, Response
 from fastapi.responses import HTMLResponse, RedirectResponse
 
-from fundxray_core.config import settings
 from fundxray_core.utils.logging import get_logger
 
 from ..services import auth, portfolio
@@ -31,18 +30,16 @@ def login(request: Request, api_key: str = ""):
     The user authenticates on angelone.in. This server never sees their client
     code, PIN or TOTP.
 
-    `api_key` is optional and comes from the visitor's own input on the login
-    page (bring-your-own SmartAPI app key). If omitted, this server's own
-    SMARTAPI_API_KEY is used instead — so a shared/demo deployment still works
-    with no visitor input required, as long as the operator configured a key.
+    `api_key` is REQUIRED and must be the visitor's own SmartAPI app key,
+    supplied via the form on the sign-in page. This server has no default —
+    SMARTAPI_API_KEY is not consulted here at all.
     """
     key = api_key.strip()
-    if not key and not settings.smartapi_api_key:
+    if not key:
         raise HTTPException(
-            503,
-            "This server has no default SmartAPI key configured, and none was "
-            "supplied. Enter your own SmartAPI app key on the sign-in page — "
-            "register one free at https://smartapi.angelone.in/."
+            400,
+            "Enter your own SmartAPI app key to sign in — register one free "
+            "at https://smartapi.angelone.in/, then paste it into the form."
         )
     redirect_url = str(request.url_for("auth_callback"))
     # The chosen key travels with the CSRF nonce, not a cookie, so it can't be
@@ -59,13 +56,12 @@ def auth_callback(request: Request, response: Response, auth_token: str = "",
         raise HTTPException(400, "Angel One did not return an auth token.")
 
     # Single-use nonce: blocks CSRF and replayed callback URLs. Also recovers
-    # whichever api_key this particular login was started with.
+    # the api_key this particular login was started with.
     used_api_key = auth.store.consume_state(state)
-    if used_api_key is None:
+    if not used_api_key:
         raise HTTPException(400, "Invalid or expired login state. Please start again.")
 
-    effective_key = used_api_key or settings.smartapi_api_key
-    session = auth.store.create(auth_token, feed_token, refresh_token, api_key=effective_key)
+    session = auth.store.create(auth_token, feed_token, refresh_token, api_key=used_api_key)
     redirect = RedirectResponse("/dashboard", status_code=302)
     # Secure is set whenever we are actually on HTTPS. Deriving it from the
     # request scheme keeps production strict without breaking local http.
@@ -93,18 +89,16 @@ def session_info(fx_session: str | None = Cookie(default=None)):
     if s is None:
         return {"signed_in": False}
     return {"signed_in": True, "expires_at": s.expires_at.isoformat(),
-            "client_code": s.client_code or None,
-            "using_own_api_key": bool(s.api_key and s.api_key != settings.smartapi_api_key)}
+            "client_code": s.client_code or None}
 
 
 @router.get("/api/me/holdings")
 def my_holdings(fx_session: str | None = Cookie(default=None)):
     """The signed-in user's own demat holdings, analysed."""
     session = _require_session(fx_session)
-    api_key = session.api_key or settings.smartapi_api_key
     try:
-        holdings = portfolio.fetch_holdings(session.auth_token, api_key)
-        totals = portfolio.fetch_totals(session.auth_token, api_key)
+        holdings = portfolio.fetch_holdings(session.auth_token, session.api_key)
+        totals = portfolio.fetch_totals(session.auth_token, session.api_key)
     except Exception as e:
         log.warning("SmartAPI holdings fetch failed: %s", e)
         raise HTTPException(502, f"Could not reach Angel One: {e}")
