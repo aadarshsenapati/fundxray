@@ -30,21 +30,18 @@
 
     <form id="loginForm" action="/login" method="get" class="mb-1">
       <label class="block text-xs muted mb-1.5" for="apiKey">
-        Your SmartAPI app key <span class="muted">(optional)</span>
+        Your SmartAPI app key <span class="text-red-400">*</span>
       </label>
-      <input type="text" id="apiKey" name="api_key" placeholder="paste your own key, or leave blank"
+      <input type="text" id="apiKey" name="api_key" placeholder="paste your SmartAPI app key" required
              class="w-full px-3 py-2.5 text-sm mb-2" autocomplete="off" spellcheck="false"/>
       <p class="text-xs muted mb-5 leading-relaxed">
-        This app doesn't run its own registered SmartAPI application by default &mdash;
-        you bring your own. It's free and takes a minute:
+        This app doesn't run its own registered SmartAPI application &mdash; every
+        visitor brings their own. It's free and takes a minute:
         <a href="https://smartapi.angelone.in/" target="_blank" rel="noopener"
            class="text-emerald-400 hover:underline">register an app at smartapi.angelone.in</a>,
         copy the API key it gives you, and paste it above. Nothing else from that page
-        (no secret, no credentials) is needed here.
-        <span id="defaultKeyNote" class="hidden">
-          This deployment also has a shared default key configured, so you can leave
-          this field blank if you'd rather use that instead.
-        </span>
+        (no secret, no credentials) is needed here, and it isn't stored anywhere
+        beyond your current session.
       </p>
       <button type="submit"
               class="block w-full text-center bg-emerald-500 hover:bg-emerald-400 text-black font-semibold px-5 py-3 rounded-lg transition">
@@ -91,14 +88,13 @@
 </div>
 
 <script>
-// If this deployment has its own default SmartAPI key configured, /health
-// reports smartapi_configured: true — surface that so visitors know leaving
-// the field blank is a valid choice, not an error.
-fetch("/health").then(r => r.json()).then(d => {
-  if (d.smartapi_configured) {
-    document.getElementById("defaultKeyNote").classList.remove("hidden");
+document.getElementById("loginForm").addEventListener("submit", (e) => {
+  const key = document.getElementById("apiKey").value.trim();
+  if (!key) {
+    e.preventDefault();
+    document.getElementById("apiKey").focus();
   }
-}).catch(() => {});
+});
 </script>
 </body>
 </html>
