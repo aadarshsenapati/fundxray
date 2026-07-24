@@ -57,9 +57,8 @@ def _get(url: str, auth_token: str, api_key: str, timeout: int = 30) -> dict:
     return payload.get("data") or {}
 
 
-def fetch_holdings(auth_token: str, api_key: str | None = None) -> list[dict]:
-    key = api_key or settings.smartapi_api_key
-    data = _get(HOLDING_URL, auth_token, key)
+def fetch_holdings(auth_token: str, api_key: str) -> list[dict]:
+    data = _get(HOLDING_URL, auth_token, api_key)
     rows = data if isinstance(data, list) else data.get("holdings", [])
     out = []
     for h in rows or []:
@@ -82,9 +81,8 @@ def fetch_holdings(auth_token: str, api_key: str | None = None) -> list[dict]:
     return out
 
 
-def fetch_totals(auth_token: str, api_key: str | None = None) -> dict:
-    key = api_key or settings.smartapi_api_key
-    data = _get(ALL_HOLDING_URL, auth_token, key)
+def fetch_totals(auth_token: str, api_key: str) -> dict:
+    data = _get(ALL_HOLDING_URL, auth_token, api_key)
     t = (data or {}).get("totalholding") or {}
     return {
         "total_value": float(t.get("totalholdingvalue") or 0),
